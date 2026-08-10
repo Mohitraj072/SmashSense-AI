@@ -1,0 +1,191 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  
+  --color-brand-bg: #0A0F1E;
+  --color-brand-card: #111827;
+  --color-brand-border: #1F2937;
+  --color-brand-accent: #00C853;
+  --color-brand-warning: #FF6B35;
+  --color-brand-info: #3B82F6;
+  --color-brand-text-primary: #F9FAFB;
+  --color-brand-text-secondary: #9CA3AF;
+  --color-brand-success: #10B981;
+}
+
+:root {
+  --bg-primary: #0A0F1E;
+  --bg-card: #111827;
+  --border-card: #1F2937;
+  --accent-primary: #00C853;
+  --accent-warning: #FF6B35;
+  --accent-info: #3B82F6;
+  --text-primary: #F9FAFB;
+  --text-secondary: #9CA3AF;
+  --accent-success: #10B981;
+}
+
+body {
+  background-color: #0A0F1E;
+  color: #F9FAFB;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+}
+
+html {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+}
+
+/* Global Box Sizing & Scroll Fix */
+*, ::before, ::after {
+  box-sizing: border-box;
+}
+
+/* Design System Typography Helpers */
+.text-hero {
+  font-size: 36px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.text-heading {
+  font-size: 20px;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+.text-subheading {
+  font-size: 16px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.text-body-custom {
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.text-caption-custom {
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.stat-number {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 28px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes fadeInCard {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-card {
+  animation: fadeInCard 0.35s ease-out forwards;
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* =========================================================
+   MEDIA QUERY BREAKPOINTS & MOBILE RESPONSIVE STYLES
+   ========================================================= */
+
+/* 1. At 768px and below (Mobile & Tablet) */
+@media (max-width: 768px) {
+  /* Prevent iOS input zoom by forcing minimum font size of 16px */
+  input, select, textarea, button, .input-responsive {
+    font-size: 16px !important;
+  }
+
+  /* Tap targets minimum 44px height */
+  button, input, select, a.btn, .tap-target, .nav-item, .mobile-nav-link {
+    min-height: 44px;
+  }
+
+  /* Hero section heading reduced to 28px */
+  .hero-heading, .text-hero {
+    font-size: 28px !important;
+    line-height: 1.2 !important;
+  }
+
+  /* All cards full width with padding reduced to 16px */
+  .responsive-card {
+    width: 100% !important;
+    padding: 16px !important;
+  }
+
+  /* Dashboard stats 2x2 grid */
+  .stats-grid-mobile {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+
+  /* Hero buttons stacked full width */
+  .hero-actions-stacked {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+  .hero-actions-stacked button,
+  .hero-actions-stacked a {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* Padding bottom for fixed mobile bottom navigation bar */
+  .mobile-bottom-padding {
+    padding-bottom: 80px !important;
+  }
+}
+
+/* 2. At 375px and below (iPhone SE / Small Screens) */
+@media (max-width: 375px) {
+  /* Stats numbers slightly smaller to prevent text overflow */
+  .stat-number, .stat-val-responsive {
+    font-size: 18px !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Hide AI rating badge on match history cards */
+  .ai-rating-badge {
+    display: none !important;
+  }
+
+  /* Upload page single column & full width dropzone */
+  .upload-grid-mobile {
+    grid-template-columns: 1fr !important;
+  }
+  .upload-zone-mobile {
+    width: 100% !important;
+  }
+}
+
+

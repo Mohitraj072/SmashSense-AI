@@ -1,0 +1,6 @@
+{
+  "name": "Badminton Performance Analysis",
+  "description": "AI-powered badminton match video analysis app for identifying weaknesses, improvement areas, and opponent patterns.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

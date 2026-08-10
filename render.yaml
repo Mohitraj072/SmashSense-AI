@@ -1,0 +1,56 @@
+services:
+  # Web Application Service (Flask + Gunicorn)
+  - type: web
+    name: badminton-analysis-app
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn firestore_matches:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120"
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: FIREBASE_STORAGE_BUCKET
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: badminton-redis
+          property: connectionString
+
+  # Background Worker Service (Celery Worker)
+  - type: worker
+    name: badminton-analysis-worker
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "celery -A firestore_matches.celery worker --loglevel=info"
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: FIREBASE_STORAGE_BUCKET
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: badminton-redis
+          property: connectionString
+
+# Redis Database Instance
+databases:
+  - name: badminton-redis
+    region: oregon
+    plan: free

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Player Progress & Trajectory - SmashSense.AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brandBg: '#0A0F1E',
+            brandCard: '#111827',
+            brandBorder: '#1F2937',
+            brandAccent: '#00C853',
+            brandWarning: '#FF6B35',
+            brandInfo: '#3B82F6',
+            brandTextPrimary: '#F9FAFB',
+            brandTextSecondary: '#9CA3AF',
+            brandSuccess: '#10B981',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-[#0A0F1E] text-[#F9FAFB] font-sans antialiased min-h-screen">
+
+  <div id="navbar-container"></div>
+  <script src="/navbar.js"></script>
+
+  <div class="max-w-5xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
+
+    <!-- Header & Navigation -->
+    <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-lg">
+          📈
+        </div>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-black text-white tracking-tight">Player Progress Timeline</h1>
+          <p class="text-xs text-slate-400">AI Evaluation of Rating Progression & Skill Mastery</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+        <a href="/" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold border border-slate-800 transition-all text-center">
+          ← Main App
+        </a>
+        <a href="/dashboard.html" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold border border-slate-800 transition-all text-center">
+          Dashboard
+        </a>
+        <a href="/history.html" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold border border-slate-800 transition-all text-center">
+          Match History
+        </a>
+        <a href="/opponent_report.html" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold border border-slate-800 transition-all text-center">
+          Scouting Report
+        </a>
+      </div>
+    </header>
+
+    <!-- Top Rating Growth Line Chart Card -->
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-slate-800/80">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            📊 Overall Rating Trajectory Over Time
+          </h2>
+          <p class="text-xs text-slate-400">Match-by-match performance evaluation score (1 - 10)</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-extrabold">
+            +1.9 Rating Gain
+          </span>
+        </div>
+      </div>
+
+      <!-- Line Chart Canvas Container -->
+      <div class="relative w-full h-72 sm:h-80">
+        <canvas id="ratingLineChart"></canvas>
+      </div>
+    </div>
+
+    <!-- AI Progress Analysis Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <!-- Card 1: Improved Areas -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4 border-t-4 border-t-emerald-500">
+        <div class="flex items-center gap-2 pb-3 border-b border-slate-800">
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-sm">
+            ✨
+          </div>
+          <div>
+            <h3 class="text-base font-extrabold text-white">Improved Skill Areas</h3>
+            <p class="text-xs text-slate-400">Weaknesses successfully resolved over time</p>
+          </div>
+        </div>
+
+        <ul id="improved-list" class="space-y-3">
+          <!-- Populated dynamically -->
+        </ul>
+      </div>
+
+      <!-- Card 2: Persistent Weaknesses -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4 border-t-4 border-t-rose-500">
+        <div class="flex items-center gap-2 pb-3 border-b border-slate-800">
+          <div class="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 font-bold text-sm">
+            ⚠️
+          </div>
+          <div>
+            <h3 class="text-base font-extrabold text-white">Persistent Weaknesses</h3>
+            <p class="text-xs text-slate-400">Ongoing focus areas requiring further drill practice</p>
+          </div>
+        </div>
+
+        <ul id="persistent-list" class="space-y-3">
+          <!-- Populated dynamically -->
+        </ul>
+      </div>
+
+      <!-- Card 3: Overall Progress Summary -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-3 md:col-span-2">
+        <div class="flex items-center gap-2 pb-3 border-b border-slate-800">
+          <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-bold text-sm">
+            📋
+          </div>
+          <div>
+            <h3 class="text-base font-extrabold text-white">Overall Progress Summary</h3>
+            <p class="text-xs text-slate-400">AI Coach high-level developmental synthesis</p>
+          </div>
+        </div>
+
+        <p id="summary-text" class="text-xs sm:text-sm text-slate-200 leading-relaxed font-medium bg-slate-950 p-4 rounded-2xl border border-slate-800/80">
+          Loading summary...
+        </p>
+      </div>
+
+      <!-- Card 4: Current Focus Recommendation -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-3 md:col-span-2 border-l-4 border-l-cyan-400">
+        <div class="flex items-center gap-2 pb-3 border-b border-slate-800">
+          <div class="w-8 h-8 rounded-lg bg-cyan-400/10 border border-cyan-400/30 flex items-center justify-center text-cyan-300 font-bold text-sm">
+            🎯
+          </div>
+          <div>
+            <h3 class="text-base font-extrabold text-white">Current Focus Recommendation</h3>
+            <p class="text-xs text-slate-400">Priority coaching directive for next training sessions</p>
+          </div>
+        </div>
+
+        <p id="recommendation-text" class="text-xs sm:text-sm text-emerald-400 font-bold leading-relaxed bg-slate-950 p-4 rounded-2xl border border-slate-800/80">
+          Loading recommendation...
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      let progressData = null;
+
+      try {
+        let session = {};
+        try {
+          session = JSON.parse(localStorage.getItem('user_session') || '{}');
+        } catch(e) {}
+
+        const headers = {};
+        if (session.idToken) {
+          headers['Authorization'] = `Bearer ${session.idToken}`;
+        }
+
+        let res = await fetch('/progress', { headers });
+        if (!res.ok) {
+          res = await fetch('/api/progress');
+        }
+
+        if (res.ok) {
+          progressData = await res.json();
+        }
+      } catch (err) {
+        console.warn('Network error, using fallback progress data:', err);
+      }
+
+      if (!progressData) {
+        progressData = {
+          timeline: {
+            dates: ['2026-03-10', '2026-04-02', '2026-05-15', '2026-06-08', '2026-07-20', '2026-08-05'],
+            ratings: [6.5, 6.8, 7.2, 7.5, 8.0, 8.4]
+          },
+          progress_analysis: {
+            improved_areas: [
+              "Backhand Clear Depth: Clearance distance improved by 35% with deeper court penetration.",
+              "Net Drop Precision: Tighter shuttle contact angle on forehand tumbles."
+            ],
+            persistent_weaknesses: [
+              "Rear Court Scissor Kick: Slight delay during rapid directional transitions into backhand corner.",
+              "Defensive Lift Clearance: Mid-court lifts occasionally lack height against heavy jump smashes."
+            ],
+            progress_summary: "Overall match rating steadily climbed from 6.5 to 8.4 over 6 analyzed matches. Court positioning and offensive transition speed show clear positive momentum.",
+            current_focus_recommendation: "Prioritize shadow footwork drills focused on rear-corner recovery and practice high defensive lift trajectory control."
+          }
+        };
+      }
+
+      const timeline = progressData.timeline || {};
+      const dates = timeline.dates || ['2026-03-10', '2026-04-02', '2026-05-15', '2026-06-08', '2026-07-20', '2026-08-05'];
+      const ratings = timeline.ratings || [6.5, 6.8, 7.2, 7.5, 8.0, 8.4];
+
+      // Render Chart.js Line Chart
+      const ctx = document.getElementById('ratingLineChart').getContext('2d');
+      
+      // Gradient background for chart
+      const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+      gradient.addColorStop(0, 'rgba(16, 185, 129, 0.35)');
+      gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: dates,
+          datasets: [{
+            label: 'Overall Match Rating',
+            data: ratings,
+            borderColor: '#10b981', // emerald-500
+            backgroundColor: gradient,
+            fill: true,
+            tension: 0.35,
+            pointBackgroundColor: '#10b981',
+            pointBorderColor: '#020617',
+            pointBorderWidth: 3,
+            pointRadius: 6,
+            pointHoverRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#0f172a',
+              borderColor: '#334155',
+              borderWidth: 1,
+              padding: 12,
+              titleFont: { size: 12, weight: 'bold' },
+              bodyFont: { size: 12 },
+              callbacks: {
+                label: function(context) {
+                  return `Rating: ${context.parsed.y} / 10`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: '#1e293b', drawBorder: false },
+              ticks: { color: '#94a3b8', font: { size: 11, weight: '600' } }
+            },
+            y: {
+              min: 5,
+              max: 10,
+              grid: { color: '#1e293b', drawBorder: false },
+              ticks: { color: '#94a3b8', font: { size: 11, weight: '600' } }
+            }
+          }
+        }
+      });
+
+      // Render Cards Content
+      const analysis = progressData.progress_analysis || progressData;
+
+      // Improved Areas
+      const improvedList = document.getElementById('improved-list');
+      improvedList.innerHTML = '';
+      const improved = analysis.improved_areas || [
+        "Backhand Clear Depth: Clearance distance improved by 35% with deeper court penetration.",
+        "Net Drop Precision: Tighter shuttle contact angle on forehand tumbles."
+      ];
+      improved.forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'flex items-start gap-3 p-3.5 rounded-2xl bg-slate-950 border border-slate-800/80';
+        li.innerHTML = `
+          <span class="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 border border-emerald-500/20 mt-0.5">
+            ✓
+          </span>
+          <span class="text-xs sm:text-sm text-slate-200 font-semibold leading-relaxed">${item}</span>
+        `;
+        improvedList.appendChild(li);
+      });
+
+      // Persistent Weaknesses
+      const persistentList = document.getElementById('persistent-list');
+      persistentList.innerHTML = '';
+      const persistent = analysis.persistent_weaknesses || [
+        "Rear Court Scissor Kick: Slight delay during rapid directional transitions into backhand corner.",
+        "Defensive Lift Clearance: Mid-court lifts occasionally lack height against heavy jump smashes."
+      ];
+      persistent.forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'flex items-start gap-3 p-3.5 rounded-2xl bg-slate-950 border border-slate-800/80';
+        li.innerHTML = `
+          <span class="w-5 h-5 rounded-full bg-rose-500/10 text-rose-400 font-bold text-xs flex items-center justify-center shrink-0 border border-rose-500/20 mt-0.5">
+            !
+          </span>
+          <span class="text-xs sm:text-sm text-slate-200 font-semibold leading-relaxed">${item}</span>
+        `;
+        persistentList.appendChild(li);
+      });
+
+      // Progress Summary
+      document.getElementById('summary-text').textContent = analysis.progress_summary || 
+        "Overall match rating steadily climbed from 6.5 to 8.4 over 6 analyzed matches.";
+
+      // Focus Recommendation
+      document.getElementById('recommendation-text').textContent = analysis.current_focus_recommendation || 
+        "Prioritize shadow footwork drills focused on rear-corner recovery and practice high defensive lift trajectory control.";
+
+    });
+  </script>
+</body>
+</html>

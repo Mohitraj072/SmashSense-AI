@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upload Match Video - SmashSense.AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brandBg: '#0A0F1E',
+            brandCard: '#111827',
+            brandBorder: '#1F2937',
+            brandAccent: '#00C853',
+            brandWarning: '#FF6B35',
+            brandInfo: '#3B82F6',
+            brandTextPrimary: '#F9FAFB',
+            brandTextSecondary: '#9CA3AF',
+            brandSuccess: '#10B981',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes shuttleSpin {
+      0% { transform: translateY(0px) rotate(0deg) scale(1); }
+      25% { transform: translateY(-18px) rotate(-15deg) scale(1.15); }
+      50% { transform: translateY(0px) rotate(0deg) scale(1); }
+      75% { transform: translateY(-12px) rotate(15deg) scale(1.08); }
+      100% { transform: translateY(0px) rotate(0deg) scale(1); }
+    }
+    .shuttle-animate {
+      animation: shuttleSpin 2.2s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-[#0A0F1E] text-[#F9FAFB] font-sans antialiased min-h-screen">
+
+  <div id="navbar-container"></div>
+  <script src="/navbar.js"></script>
+
+  <div class="max-w-6xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
+
+    <!-- Header Section -->
+    <header class="pb-6 border-b border-[#1F2937] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-xl bg-[#00C853]/10 border border-[#00C853]/30 flex items-center justify-center text-[#00C853] font-bold text-2xl">
+          🏸
+        </div>
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-bold text-[#F9FAFB] tracking-tight">Upload Match Video</h1>
+          <p class="text-sm text-[#9CA3AF]">Upload match footage for comprehensive AI biomechanical & tactical breakdown</p>
+        </div>
+      </div>
+
+      <a href="/dashboard.html" class="px-4 py-2 rounded-xl bg-[#111827] hover:bg-[#1F2937] text-[#9CA3AF] hover:text-[#F9FAFB] text-xs font-bold border border-[#1F2937] transition-all text-center">
+        ← Back to Dashboard
+      </a>
+    </header>
+
+    <!-- Error Card Container (Hidden by default) -->
+    <div id="error-card" class="hidden bg-[#FF6B35]/10 border border-[#FF6B35]/40 rounded-2xl p-6 shadow-2xl space-y-4 border-l-4 border-l-[#FF6B35]">
+      <div class="flex items-start gap-3">
+        <div class="w-9 h-9 rounded-xl bg-[#FF6B35]/20 text-[#FF6B35] flex items-center justify-center text-lg font-bold shrink-0">
+          ⚠️
+        </div>
+        <div class="space-y-1">
+          <h3 class="text-sm font-bold text-[#F9FAFB]">Match Analysis Failed</h3>
+          <p id="error-message-text" class="text-xs text-[#9CA3AF] font-medium leading-relaxed">
+            An error occurred during video processing.
+          </p>
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button
+          id="retry-btn"
+          type="button"
+          class="px-5 py-2.5 rounded-xl bg-[#FF6B35] hover:bg-[#FF6B35]/90 text-white font-bold text-xs tracking-wide transition-all flex items-center gap-2"
+        >
+          <span>🔄 Retry Analysis</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Two-Column Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <!-- LEFT COLUMN (Form) -->
+      <div class="lg:col-span-7 bg-[#111827] border border-[#1F2937] rounded-2xl p-6 sm:p-8 shadow-xl">
+        <form id="upload-form" class="space-y-6">
+
+          <!-- Drag and Drop Dropzone -->
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">
+              Match Video File <span class="text-[#00C853]">*</span>
+            </label>
+            <div
+              id="dropzone"
+              class="border-2 border-dashed border-[#00C853]/60 hover:border-[#00C853] bg-[#0A0F1E]/80 rounded-2xl p-8 text-center cursor-pointer transition-all space-y-3 group"
+            >
+              <input type="file" id="video-file-input" accept="video/*" class="hidden" />
+              <div class="w-16 h-16 rounded-2xl bg-[#00C853]/10 border border-[#00C853]/30 flex items-center justify-center text-3xl text-[#00C853] mx-auto group-hover:scale-110 transition-transform">
+                🏸
+              </div>
+              <div class="space-y-1">
+                <p id="file-label-main" class="text-sm font-semibold text-[#F9FAFB]">
+                  Drag your match video here or click to browse
+                </p>
+                <p id="file-label-sub" class="text-xs text-[#9CA3AF]">
+                  Supports MP4, MOV, AVI, MKV (Up to 500MB)
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Match Date & Opponent Name -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <label for="match_date" class="block text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">
+                Match Date
+              </label>
+              <input
+                type="date"
+                id="match_date"
+                name="match_date"
+                class="w-full px-4 py-3 rounded-xl bg-[#0A0F1E] border border-[#1F2937] text-[#F9FAFB] text-sm focus:outline-none focus:border-[#00C853] transition-colors"
+              />
+            </div>
+
+            <div class="space-y-2">
+              <label for="opponent_name" class="block text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">
+                Opponent Name <span class="text-[#00C853]">*</span>
+              </label>
+              <input
+                type="text"
+                id="opponent_name"
+                name="opponent_name"
+                required
+                placeholder="e.g. Viktor Axelsen"
+                value="Viktor Axelsen"
+                class="w-full px-4 py-3 rounded-xl bg-[#0A0F1E] border border-[#1F2937] text-[#F9FAFB] text-sm placeholder-[#9CA3AF]/50 focus:outline-none focus:border-[#00C853] transition-colors"
+              />
+            </div>
+          </div>
+
+          <!-- Match Result Buttons -->
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">
+              Match Result
+            </label>
+            <input type="hidden" id="result-input" name="result" value="Loss" />
+            <div class="grid grid-cols-2 gap-4">
+              <button
+                type="button"
+                id="btn-win"
+                class="py-3 px-4 rounded-xl border border-[#1F2937] bg-[#0A0F1E] text-[#9CA3AF] font-bold text-sm transition-all"
+              >
+                🏆 WIN
+              </button>
+              <button
+                type="button"
+                id="btn-loss"
+                class="py-3 px-4 rounded-xl border border-[#FF6B35]/50 bg-[#FF6B35]/20 text-[#FF6B35] font-bold text-sm transition-all shadow-md"
+              >
+                ❌ LOSS
+              </button>
+            </div>
+          </div>
+
+          <!-- Scores -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <label for="your_score" class="block text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">
+                Your Score
+              </label>
+              <input
+                type="number"
+                id="your_score"
+                name="your_score"
+                min="0"
+                max="30"
+                value="18"
+                class="w-full px-4 py-3 rounded-xl bg-[#0A0F1E] border border-[#1F2937] text-[#F9FAFB] font-mono font-bold text-lg focus:outline-none focus:border-[#00C853] transition-colors"
+              />
+            </div>
+
+            <div class="space-y-2">
+              <label for="opponent_score" class="block text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">
+                Opponent Score
+              </label>
+              <input
+                type="number"
+                id="opponent_score"
+                name="opponent_score"
+                min="0"
+                max="30"
+                value="21"
+                class="w-full px-4 py-3 rounded-xl bg-[#0A0F1E] border border-[#1F2937] text-[#F9FAFB] font-mono font-bold text-lg focus:outline-none focus:border-[#00C853] transition-colors"
+              />
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="pt-2">
+            <button
+              id="submit-btn"
+              type="submit"
+              class="w-full py-4 px-6 rounded-xl bg-[#00C853] hover:bg-[#00C853]/90 text-[#0A0F1E] font-bold text-base tracking-wide shadow-lg shadow-[#00C853]/20 transition-all flex items-center justify-center gap-3 cursor-pointer"
+            >
+              <span class="text-xl">🚀</span>
+              <span>Start AI Analysis</span>
+            </button>
+          </div>
+
+        </form>
+      </div>
+
+      <!-- RIGHT COLUMN (Info Panel) -->
+      <div class="lg:col-span-5 space-y-6">
+        
+        <!-- What AI Will Analyze Card -->
+        <div class="bg-[#111827] border border-[#1F2937] rounded-2xl p-6 sm:p-8 shadow-xl space-y-6">
+          <div class="flex items-center gap-3 border-b border-[#1F2937] pb-4">
+            <div class="w-10 h-10 rounded-xl bg-[#3B82F6]/10 border border-[#3B82F6]/30 flex items-center justify-center text-[#3B82F6] font-bold text-lg">
+              ✨
+            </div>
+            <div>
+              <h2 class="text-lg font-bold text-[#F9FAFB]">What AI Will Analyze</h2>
+              <p class="text-xs text-[#9CA3AF]">Computer vision & biomechanics pipeline</p>
+            </div>
+          </div>
+
+          <!-- Checklist Items -->
+          <div id="checklist-container" class="space-y-3.5">
+            <div class="checklist-item flex items-center gap-3 p-3 rounded-xl bg-[#0A0F1E]/50 border border-[#1F2937] transition-all opacity-40">
+              <span class="check-icon text-[#9CA3AF] text-lg font-bold">○</span>
+              <span class="text-sm font-medium text-[#F9FAFB]">Footwork & court movement</span>
+            </div>
+            <div class="checklist-item flex items-center gap-3 p-3 rounded-xl bg-[#0A0F1E]/50 border border-[#1F2937] transition-all opacity-40">
+              <span class="check-icon text-[#9CA3AF] text-lg font-bold">○</span>
+              <span class="text-sm font-medium text-[#F9FAFB]">Stroke technique & power</span>
+            </div>
+            <div class="checklist-item flex items-center gap-3 p-3 rounded-xl bg-[#0A0F1E]/50 border border-[#1F2937] transition-all opacity-40">
+              <span class="check-icon text-[#9CA3AF] text-lg font-bold">○</span>
+              <span class="text-sm font-medium text-[#F9FAFB]">Court positioning patterns</span>
+            </div>
+            <div class="checklist-item flex items-center gap-3 p-3 rounded-xl bg-[#0A0F1E]/50 border border-[#1F2937] transition-all opacity-40">
+              <span class="check-icon text-[#9CA3AF] text-lg font-bold">○</span>
+              <span class="text-sm font-medium text-[#F9FAFB]">Endurance & stamina levels</span>
+            </div>
+            <div class="checklist-item flex items-center gap-3 p-3 rounded-xl bg-[#0A0F1E]/50 border border-[#1F2937] transition-all opacity-40">
+              <span class="check-icon text-[#9CA3AF] text-lg font-bold">○</span>
+              <span class="text-sm font-medium text-[#F9FAFB]">Opponent weaknesses & patterns</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Format & Specs Card -->
+        <div class="bg-[#111827] border border-[#1F2937] rounded-2xl p-6 shadow-xl space-y-4">
+          <h3 class="text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">Video Requirements</h3>
+          
+          <div class="grid grid-cols-2 gap-4 text-xs">
+            <div class="p-3 rounded-xl bg-[#0A0F1E] border border-[#1F2937] space-y-1">
+              <div class="text-[#9CA3AF]">Supported Formats</div>
+              <div class="font-bold text-[#00C853] font-mono">MP4, MOV, AVI, MKV</div>
+            </div>
+            <div class="p-3 rounded-xl bg-[#0A0F1E] border border-[#1F2937] space-y-1">
+              <div class="text-[#9CA3AF]">Maximum File Size</div>
+              <div class="font-bold text-[#F9FAFB] font-mono">500 MB</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Full-Screen Loading Overlay (Requirement 1 & 4) -->
+  <div
+    id="loading-overlay"
+    class="fixed inset-0 bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-6 z-50 hidden text-center space-y-6"
+  >
+    <!-- Animated Shuttle Icon -->
+    <div class="relative">
+      <div class="w-24 h-24 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shadow-2xl shadow-emerald-500/20">
+        <span class="text-5xl shuttle-animate inline-block">🏸</span>
+      </div>
+      <div class="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-cyan-300 text-xs font-bold animate-pulse">
+        AI
+      </div>
+    </div>
+
+    <!-- Rotating Analysis Message -->
+    <div class="space-y-2 max-w-md mx-auto">
+      <h2 class="text-xl font-black text-white tracking-tight">Processing AI Match Analysis</h2>
+      <p id="rotating-text" class="text-sm font-bold text-emerald-400 min-h-[28px] transition-all duration-300">
+        Analyzing your footwork...
+      </p>
+      <p class="text-xs text-slate-400">
+        Deep vision tracking and stroke classification usually take 30-60 seconds.
+      </p>
+    </div>
+
+    <!-- Progress Bar (Requirement 4: Fills over 45 seconds) -->
+    <div class="w-full max-w-md space-y-2">
+      <div class="flex items-center justify-between text-xs font-extrabold">
+        <span class="text-slate-400 uppercase tracking-wider">Analysis Progress</span>
+        <span id="progress-percent" class="text-emerald-400">0%</span>
+      </div>
+
+      <div class="w-full h-3 bg-slate-900 border border-slate-800 rounded-full overflow-hidden p-0.5">
+        <div
+          id="progress-fill"
+          class="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 rounded-full transition-all duration-500 ease-linear"
+          style="width: 0%"
+        ></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Script logic adhering to requirements -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('upload-form');
+      const submitBtn = document.getElementById('submit-btn');
+      const loadingOverlay = document.getElementById('loading-overlay');
+      const rotatingTextEl = document.getElementById('rotating-text');
+      const progressPercentEl = document.getElementById('progress-percent');
+      const progressFillEl = document.getElementById('progress-fill');
+      const errorCard = document.getElementById('error-card');
+      const errorMessageText = document.getElementById('error-message-text');
+      const retryBtn = document.getElementById('retry-btn');
+
+      const dropzone = document.getElementById('dropzone');
+      const videoFileInput = document.getElementById('video-file-input');
+      const fileLabelMain = document.getElementById('file-label-main');
+
+      // Win / Loss Toggle Buttons
+      const btnWin = document.getElementById('btn-win');
+      const btnLoss = document.getElementById('btn-loss');
+      const resultInput = document.getElementById('result-input');
+
+      btnWin.addEventListener('click', () => {
+        resultInput.value = 'Win';
+        btnWin.className = 'py-3 px-4 rounded-xl border border-[#00C853]/50 bg-[#00C853]/20 text-[#00C853] font-bold text-sm transition-all shadow-md';
+        btnLoss.className = 'py-3 px-4 rounded-xl border border-[#1F2937] bg-[#0A0F1E] text-[#9CA3AF] font-bold text-sm transition-all';
+      });
+
+      btnLoss.addEventListener('click', () => {
+        resultInput.value = 'Loss';
+        btnLoss.className = 'py-3 px-4 rounded-xl border border-[#FF6B35]/50 bg-[#FF6B35]/20 text-[#FF6B35] font-bold text-sm transition-all shadow-md';
+        btnWin.className = 'py-3 px-4 rounded-xl border border-[#1F2937] bg-[#0A0F1E] text-[#9CA3AF] font-bold text-sm transition-all';
+      });
+
+      // Animated Checklist Auto-ticking
+      const checklistItems = document.querySelectorAll('.checklist-item');
+      checklistItems.forEach((item, idx) => {
+        setTimeout(() => {
+          item.classList.remove('opacity-40');
+          item.classList.add('opacity-100', 'border-[#00C853]/30', 'bg-[#00C853]/5');
+          const checkIcon = item.querySelector('.check-icon');
+          if (checkIcon) {
+            checkIcon.textContent = '✓';
+            checkIcon.className = 'check-icon text-[#00C853] text-lg font-bold scale-110 transition-all';
+          }
+        }, (idx + 1) * 400);
+      });
+
+      // Rotating messages cycling every 3 seconds (Requirement 1)
+      const rotatingMessages = [
+        "Analyzing your footwork...",
+        "Checking your strokes...",
+        "Reading opponent patterns...",
+        "Evaluating smash trajectories & court coverage...",
+        "Calculating unforced error impact zones...",
+        "Synthesizing AI coaching recommendations..."
+      ];
+
+      let messageIndex = 0;
+      let rotationInterval = null;
+      let progressInterval = null;
+
+      // Dropzone click & file selection
+      dropzone.addEventListener('click', () => videoFileInput.click());
+
+      videoFileInput.addEventListener('change', () => {
+        if (videoFileInput.files && videoFileInput.files[0]) {
+          fileLabelMain.textContent = `Selected: ${videoFileInput.files[0].name} (${(videoFileInput.files[0].size / (1024*1024)).toFixed(1)} MB)`;
+          fileLabelMain.classList.add('text-emerald-400');
+        }
+      });
+
+      // Drag and drop events
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          dropzone.classList.add('border-emerald-500', 'bg-slate-900');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          dropzone.classList.remove('border-emerald-500', 'bg-slate-900');
+        });
+      });
+
+      dropzone.addEventListener('drop', (e) => {
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          videoFileInput.files = e.dataTransfer.files;
+          fileLabelMain.textContent = `Selected: ${e.dataTransfer.files[0].name} (${(e.dataTransfer.files[0].size / (1024*1024)).toFixed(1)} MB)`;
+          fileLabelMain.classList.add('text-emerald-400');
+        }
+      });
+
+      // Retry button click
+      retryBtn.addEventListener('click', () => {
+        errorCard.classList.add('hidden');
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      });
+
+      // Form Submit Handler
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // 1. Hide error card if shown
+        errorCard.classList.add('hidden');
+
+        // 2. Disable Submit button immediately after first click (Requirement 3)
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+        // 3. Show full-screen loading overlay (Requirement 1)
+        loadingOverlay.classList.remove('hidden');
+
+        // Reset progress & rotating text
+        messageIndex = 0;
+        rotatingTextEl.textContent = rotatingMessages[0];
+
+        // Start rotating text every 3 seconds (Requirement 1)
+        clearInterval(rotationInterval);
+        rotationInterval = setInterval(() => {
+          messageIndex = (messageIndex + 1) % rotatingMessages.length;
+          rotatingTextEl.style.opacity = 0;
+          setTimeout(() => {
+            rotatingTextEl.textContent = rotatingMessages[messageIndex];
+            rotatingTextEl.style.opacity = 1;
+          }, 150);
+        }, 3000);
+
+        // Progress bar simulation filling over 45 seconds (Requirement 4)
+        let currentProgress = 0;
+        const totalDurationMs = 45000; // 45 seconds
+        const stepMs = 500;
+        const totalSteps = totalDurationMs / stepMs;
+        const incrementPerStep = 95 / totalSteps; // Caps at 95% until complete
+
+        clearInterval(progressInterval);
+        progressFillEl.style.width = '0%';
+        progressPercentEl.textContent = '0%';
+
+        progressInterval = setInterval(() => {
+          if (currentProgress < 95) {
+            currentProgress += incrementPerStep;
+            if (currentProgress > 95) currentProgress = 95;
+            const floorVal = Math.floor(currentProgress);
+            progressFillEl.style.width = `${floorVal}%`;
+            progressPercentEl.textContent = `${floorVal}%`;
+          }
+        }, stepMs);
+
+        // Build FormData
+        const formData = new FormData(form);
+
+        if (videoFileInput.files && videoFileInput.files[0]) {
+          formData.append('video', videoFileInput.files[0]);
+        }
+
+        try {
+          // Send request to API to start async analysis job
+          let response = await fetch('/api/analyze', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!response.ok) {
+            response = await fetch('/analyze', {
+              method: 'POST',
+              body: formData
+            });
+          }
+
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error || `Server error: ${response.status} ${response.statusText}`);
+          }
+
+          const resultData = await response.json();
+          const jobId = resultData.job_id || resultData.jobId || resultData.id;
+
+          // If analysis completed synchronously
+          if (resultData.status === 'completed' || (!jobId && (resultData.match || resultData.player_weaknesses))) {
+            clearInterval(progressInterval);
+            clearInterval(rotationInterval);
+            progressFillEl.style.width = '100%';
+            progressPercentEl.textContent = '100%';
+            if (resultData.match || resultData.result) {
+              localStorage.setItem('latest_analysis', JSON.stringify(resultData.match || resultData.result));
+            }
+            setTimeout(() => {
+              window.location.href = '/results.html';
+            }, 500);
+            return;
+          }
+
+          if (!jobId) {
+            throw new Error('No job_id returned from analysis endpoint.');
+          }
+
+          // Requirement 5: Poll /status/<job_id> every 5 seconds until status is "completed"
+          let pollErrors = 0;
+          let pollInterval = setInterval(async () => {
+            try {
+              let statusRes = await fetch(`/api/status/${jobId}`);
+              if (!statusRes.ok) {
+                statusRes = await fetch(`/status/${jobId}`);
+              }
+
+              if (!statusRes.ok) {
+                pollErrors++;
+                if (pollErrors >= 5) {
+                  clearInterval(pollInterval);
+                  clearInterval(progressInterval);
+                  clearInterval(rotationInterval);
+                  loadingOverlay.classList.add('hidden');
+                  errorMessageText.textContent = 'Failed to poll job status after multiple attempts.';
+                  errorCard.classList.remove('hidden');
+                }
+                return;
+              }
+
+              pollErrors = 0; // Reset error counter on successful fetch
+              const statusData = await statusRes.json();
+
+              if (statusData.message) {
+                rotatingTextEl.textContent = statusData.message;
+              }
+
+              if (statusData.progress !== undefined) {
+                currentProgress = statusData.progress;
+                progressFillEl.style.width = `${currentProgress}%`;
+                progressPercentEl.textContent = `${Math.floor(currentProgress)}%`;
+              }
+
+              // Status check
+              if (statusData.status === 'completed') {
+                clearInterval(pollInterval);
+                clearInterval(progressInterval);
+                clearInterval(rotationInterval);
+
+                progressFillEl.style.width = '100%';
+                progressPercentEl.textContent = '100%';
+                rotatingTextEl.textContent = "Analysis complete! Loading results...";
+
+                if (statusData.match || statusData.result) {
+                  localStorage.setItem('latest_analysis', JSON.stringify(statusData.match || statusData.result));
+                }
+
+                setTimeout(() => {
+                  window.location.href = '/results.html';
+                }, 800);
+              } else if (statusData.status === 'failed') {
+                clearInterval(pollInterval);
+                clearInterval(progressInterval);
+                clearInterval(rotationInterval);
+
+                loadingOverlay.classList.add('hidden');
+                errorMessageText.textContent = statusData.error || statusData.message || 'Video analysis failed.';
+                errorCard.classList.remove('hidden');
+              }
+
+            } catch (pollErr) {
+              pollErrors++;
+              if (pollErrors >= 5) {
+                clearInterval(pollInterval);
+                clearInterval(progressInterval);
+                clearInterval(rotationInterval);
+                loadingOverlay.classList.add('hidden');
+                errorMessageText.textContent = 'Connection error while checking analysis status.';
+                errorCard.classList.remove('hidden');
+              }
+            }
+          }, 5000); // 5 seconds polling frequency
+
+        } catch (err) {
+          // Cleanup timers
+          clearInterval(progressInterval);
+          clearInterval(rotationInterval);
+
+          // Hide loading overlay
+          loadingOverlay.classList.add('hidden');
+
+          // Requirement 2: Show red error card with error message and Retry button
+          errorMessageText.textContent = err.message || 'Failed to connect to video analysis service. Please try again.';
+          errorCard.classList.remove('hidden');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

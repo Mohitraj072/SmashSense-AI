@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Opponent Scouting Report - SmashSense.AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brandBg: '#0A0F1E',
+            brandCard: '#111827',
+            brandBorder: '#1F2937',
+            brandAccent: '#00C853',
+            brandWarning: '#FF6B35',
+            brandInfo: '#3B82F6',
+            brandTextPrimary: '#F9FAFB',
+            brandTextSecondary: '#9CA3AF',
+            brandSuccess: '#10B981',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#0A0F1E] text-[#F9FAFB] font-sans antialiased min-h-screen">
+
+  <div id="navbar-container"></div>
+  <script src="/navbar.js"></script>
+
+  <div class="max-w-4xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
+
+    <!-- Header & Navigation -->
+    <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-lg">
+          🔍
+        </div>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-black text-white tracking-tight">Opponent Intelligence Report</h1>
+          <p class="text-xs text-slate-400">AI-Synthesized Scouting & Tactical Breakthroughs</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+        <a href="/" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold border border-slate-800 transition-all text-center">
+          ← Main App
+        </a>
+        <a href="/dashboard.html" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold border border-slate-800 transition-all text-center">
+          Dashboard
+        </a>
+        <a href="/history.html" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold border border-slate-800 transition-all text-center">
+          Match History
+        </a>
+      </div>
+    </header>
+
+    <!-- Search Input Form -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg">
+      <form id="search-form" class="flex flex-col sm:flex-row items-center gap-3">
+        <div class="relative w-full">
+          <input
+            type="text"
+            id="opponent-input"
+            placeholder="Enter opponent name (e.g. Viktor, Axelsen, Lee Zii Jia)..."
+            class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-emerald-500 transition-all"
+          />
+          <span class="absolute left-3.5 top-3.5 text-slate-500 text-sm">🎯</span>
+        </div>
+        <button
+          type="submit"
+          class="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs tracking-wide shadow-lg shadow-emerald-500/20 transition-all whitespace-nowrap"
+        >
+          Generate Report
+        </button>
+      </form>
+    </div>
+
+    <!-- Loading State Indicator -->
+    <div id="loading-state" class="hidden text-center py-12 space-y-3">
+      <div class="inline-block w-8 h-8 border-4 border-emerald-500/30 border-t-emerald-400 rounded-full animate-spin"></div>
+      <p class="text-xs text-slate-400 font-medium animate-pulse">Analyzing historical match footage & synthesizing tactical weaknesses...</p>
+    </div>
+
+    <!-- Report Main Container -->
+    <div id="report-container" class="space-y-6">
+
+      <!-- Opponent Summary Banner -->
+      <div class="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-[10px] font-bold uppercase tracking-wider">
+              Scouting Report
+            </span>
+            <span id="matches-badge" class="px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 font-mono text-[10px] font-bold">
+              2 Matches Analyzed
+            </span>
+          </div>
+          <h2 id="opp-name-heading" class="text-2xl sm:text-3xl font-black text-white tracking-tight">
+            Opponent Analysis
+          </h2>
+        </div>
+
+        <div class="text-right hidden sm:block">
+          <span class="text-xs text-slate-400 block font-semibold">AI Confidence Score</span>
+          <span class="text-xl font-black text-emerald-400">94%</span>
+        </div>
+      </div>
+
+      <!-- Top 3 Consistent Weaknesses Card -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+        <div class="flex items-center gap-2 pb-3 border-b border-slate-800">
+          <div class="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 font-bold text-sm">
+            ⚡
+          </div>
+          <div>
+            <h3 class="text-base font-extrabold text-white">Top 3 Consistent Weaknesses</h3>
+            <p class="text-xs text-slate-400">Recurring patterns exploited across multiple matches</p>
+          </div>
+        </div>
+
+        <ul id="weaknesses-list" class="space-y-3">
+          <!-- Populated dynamically -->
+        </ul>
+      </div>
+
+      <!-- Best Strategy to Beat Them Card -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4 border-l-4 border-l-emerald-500">
+        <div class="flex items-center gap-2 pb-3 border-b border-slate-800">
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-sm">
+            🏆
+          </div>
+          <div>
+            <h3 class="text-base font-extrabold text-white">Best Tactical Game Plan</h3>
+            <p class="text-xs text-slate-400">Recommended court strategy and shuttle control</p>
+          </div>
+        </div>
+
+        <p id="strategy-text" class="text-xs sm:text-sm text-slate-200 leading-relaxed font-medium bg-slate-950 p-4 rounded-2xl border border-slate-800/80">
+          Loading strategy...
+        </p>
+      </div>
+
+      <!-- Playing Style Patterns & Habits Card -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+        <div class="flex items-center gap-2 pb-3 border-b border-slate-800">
+          <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-bold text-sm">
+            📊
+          </div>
+          <div>
+            <h3 class="text-base font-extrabold text-white">Playing Style Patterns & Habits</h3>
+            <p class="text-xs text-slate-400">Observed shot tendencies and positional habits</p>
+          </div>
+        </div>
+
+        <div id="patterns-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const searchForm = document.getElementById('search-form');
+      const inputEl = document.getElementById('opponent-input');
+      const loadingEl = document.getElementById('loading-state');
+      const reportContainer = document.getElementById('report-container');
+
+      // Check URL query params for initial opponent name
+      const urlParams = new URLSearchParams(window.location.search);
+      const initialName = urlParams.get('name') || urlParams.get('opponent_name') || 'Viktor';
+
+      inputEl.value = initialName;
+      fetchOpponentReport(initialName);
+
+      searchForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = inputEl.value.trim();
+        if (name) {
+          // Update URL without reload
+          const newUrl = `${window.location.pathname}?name=${encodeURIComponent(name)}`;
+          window.history.pushState({ path: newUrl }, '', newUrl);
+          fetchOpponentReport(name);
+        }
+      });
+
+      async function fetchOpponentReport(opponentName) {
+        loadingEl.classList.remove('hidden');
+        reportContainer.classList.add('opacity-50');
+
+        let reportData = null;
+
+        try {
+          // Try fetching from protected or public backend route
+          let session = {};
+          try {
+            session = JSON.parse(localStorage.getItem('user_session') || '{}');
+          } catch(e) {}
+
+          const headers = {};
+          if (session.idToken) {
+            headers['Authorization'] = `Bearer ${session.idToken}`;
+          }
+
+          let res = await fetch(`/opponent_report?name=${encodeURIComponent(opponentName)}`, { headers });
+          if (!res.ok) {
+            res = await fetch(`/api/opponent_report?name=${encodeURIComponent(opponentName)}`);
+          }
+
+          if (res.ok) {
+            const data = await res.json();
+            reportData = data.report || data;
+          }
+        } catch (err) {
+          console.warn('Network error, using fallback scouting report:', err);
+        }
+
+        // Fallback default if API unavailable
+        if (!reportData) {
+          reportData = {
+            opponent_name: opponentName,
+            matches_analyzed: 2,
+            top_3_weaknesses: [
+              `Vulnerable to rapid flat drives directed at the deep forehand hip`,
+              `Delayed lateral footwork recovery after returning deep backhand clears`,
+              `Tends to commit early on cross-court net tumble drop shots`
+            ],
+            best_strategy: `Maintain aggressive low-trajectory drives to suppress high returns. Avoid lifting into their forehand smash zone. Pin them to the rear left court then drop cut tightly to the forehand net corner.`,
+            playing_style_patterns: [
+              `Favors steep jump-smashes when given high shuttle trajectory`,
+              `Relies on high defensive clears when pressured under speed`
+            ]
+          };
+        }
+
+        renderReport(reportData);
+
+        loadingEl.classList.add('hidden');
+        reportContainer.classList.remove('opacity-50');
+      }
+
+      function renderReport(report) {
+        const oppName = report.opponent_name || inputEl.value || 'Opponent';
+        const matchesCount = report.matches_analyzed ?? 2;
+
+        document.getElementById('opp-name-heading').textContent = `Scouting Report: ${oppName}`;
+        document.getElementById('matches-badge').textContent = `${matchesCount} Match${matchesCount !== 1 ? 'es' : ''} Analyzed`;
+
+        // Render Weaknesses
+        const weaknessesList = document.getElementById('weaknesses-list');
+        weaknessesList.innerHTML = '';
+        const weaknesses = report.top_3_weaknesses || report.weaknesses || [
+          'Vulnerable to fast flat drives on forehand hip',
+          'Shallow net lifts under baseline pressure',
+          'Late backhand corner recovery'
+        ];
+
+        weaknesses.forEach((w, idx) => {
+          const li = document.createElement('li');
+          li.className = 'flex items-start gap-3 p-3.5 rounded-2xl bg-slate-950 border border-slate-800/80';
+          li.innerHTML = `
+            <span class="w-6 h-6 rounded-full bg-rose-500/10 text-rose-400 font-extrabold text-xs flex items-center justify-center shrink-0 border border-rose-500/20 mt-0.5">
+              ${idx + 1}
+            </span>
+            <span class="text-xs sm:text-sm text-slate-200 font-semibold leading-relaxed">
+              ${w}
+            </span>
+          `;
+          weaknessesList.appendChild(li);
+        });
+
+        // Render Strategy
+        const strategyText = document.getElementById('strategy-text');
+        strategyText.textContent = report.best_strategy || report.recommended_strategy || 'Maintain fast low drives to prevent opponent from setting up steep smashes.';
+
+        // Render Patterns
+        const patternsContainer = document.getElementById('patterns-container');
+        patternsContainer.innerHTML = '';
+        const patterns = report.playing_style_patterns || report.patterns || [
+          'Steep jump smash from right rear court',
+          'Tight net tumble response when forced forward'
+        ];
+
+        patterns.forEach((p) => {
+          const div = document.createElement('div');
+          div.className = 'p-3.5 rounded-2xl bg-slate-950 border border-slate-800/80 space-y-1';
+          div.innerHTML = `
+            <span class="text-[10px] font-bold uppercase tracking-wider text-cyan-400 font-mono">Tendency</span>
+            <p class="text-xs text-slate-300 font-medium leading-relaxed">${p}</p>
+          `;
+          patternsContainer.appendChild(div);
+        });
+      }
+    });
+  </script>
+</body>
+</html>
