@@ -1,6 +1,8 @@
 {
-  "name": "Badminton Performance Analysis",
-  "description": "AI-powered badminton match video analysis app for identifying weaknesses, improvement areas, and opponent patterns.",
-  "requestFramePermissions": [],
+  "name": "SmashSense.AI — Multi-Sport Edition",
+  "description": "AI-powered multi-racket sport match video analysis platform for Badminton, Tennis, Squash, Table Tennis, and Pickleball.",
+  "requestFramePermissions": [
+    "camera"
+  ],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -8,3 +8,5 @@ celery>=5.3.6
 redis>=5.0.1
 pytest>=7.4.0
 requests>=2.31.0
+opencv-python>=4.8.0
+mediapipe>=0.10.0

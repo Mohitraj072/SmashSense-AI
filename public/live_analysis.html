@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Live Camera Analysis - SmashSense.AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brandBg: '#0A0F1E',
+            brandCard: '#111827',
+            brandBorder: '#1F2937',
+            brandAccent: '#00C853',
+            brandWarning: '#FF6B35',
+            brandInfo: '#3B82F6',
+            brandTextPrimary: '#F9FAFB',
+            brandTextSecondary: '#9CA3AF',
+            brandSuccess: '#10B981',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#0A0F1E] text-[#F9FAFB] font-sans antialiased min-h-screen">
+
+  <div id="navbar-container"></div>
+  <script src="/navbar.js"></script>
+
+  <main class="max-w-4xl mx-auto space-y-6 p-3 sm:p-6 pb-24">
+
+    <!-- Page Header (Mobile Optimized) -->
+    <header class="flex items-center justify-between gap-3 pb-4 border-b border-slate-800">
+      <div class="space-y-0.5">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-400 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span> Live Vision AI
+          </span>
+          <span class="px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold">
+            Gemini 1.5 Flash @ 2s
+          </span>
+        </div>
+        <h1 class="text-xl sm:text-2xl font-black text-white tracking-tight">
+          Warmup & Match Live Analysis
+        </h1>
+        <p class="text-xs text-slate-400">
+          Point phone camera at court. Real-time court position, stroke, and stance feedback.
+        </p>
+      </div>
+
+      <a href="/dashboard.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold border border-slate-700 hover:bg-slate-700 transition-all">
+        ← Back
+      </a>
+    </header>
+
+    <!-- Camera Viewport & Real-Time HUD -->
+    <div class="relative w-full rounded-3xl overflow-hidden bg-black border-2 border-slate-800 shadow-2xl space-y-0">
+      
+      <!-- Video Viewfinder Container -->
+      <div class="relative w-full aspect-[4/3] sm:aspect-[16/9] bg-slate-950 flex items-center justify-center overflow-hidden">
+        
+        <!-- Live Video Element -->
+        <video id="camera-video" autoplay playsinline muted class="w-full h-full object-cover hidden"></video>
+        
+        <!-- Simulation Demo Frame Graphic (Shown when camera is idle or simulated) -->
+        <div id="simulated-viewfinder" class="relative w-full h-full bg-slate-900 flex flex-col items-center justify-center p-6 text-center space-y-3">
+          <img id="simulated-court-img" src="https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=1000&auto=format&fit=crop&q=80" class="absolute inset-0 w-full h-full object-cover opacity-40 blur-[1px]" alt="Court Viewfinder" />
+          <div class="relative z-10 space-y-2">
+            <div class="w-14 h-14 rounded-full bg-emerald-500/20 border-2 border-emerald-500/50 flex items-center justify-center text-emerald-400 text-2xl mx-auto shadow-lg shadow-emerald-500/20">
+              📹
+            </div>
+            <h3 class="text-sm font-extrabold text-white">Camera Standby / Ready</h3>
+            <p class="text-xs text-slate-300 max-w-xs mx-auto">
+              Mount your phone on a tripod facing the badminton court or tap <strong>Start Session</strong>.
+            </p>
+          </div>
+        </div>
+
+        <!-- Offscreen Canvas for Frame Capture -->
+        <canvas id="capture-canvas" class="hidden" width="640" height="360"></canvas>
+
+        <!-- HUD Overlay: Top Status Bar -->
+        <div class="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 z-20">
+          <div class="bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-slate-700 text-[10px] font-mono font-bold text-white flex items-center gap-2 shadow-lg">
+            <span id="live-indicator-dot" class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
+            <span id="live-status-text">OFFLINE</span>
+            <span id="frame-counter-badge" class="text-emerald-400 font-extrabold border-l border-slate-700 pl-2">0 FRAMES</span>
+          </div>
+
+          <button id="flip-camera-btn" class="bg-slate-950/80 hover:bg-slate-800 text-white p-2 rounded-full border border-slate-700 backdrop-blur-md text-xs transition-all flex items-center gap-1 shadow-lg">
+            <span>🔄</span> <span class="hidden sm:inline text-[10px] font-bold">Flip Cam</span>
+          </button>
+        </div>
+
+        <!-- HUD Overlay: Bottom Real-Time Quick Cards (Direct Video Overlay) -->
+        <div id="hud-cards-overlay" class="absolute bottom-3 left-3 right-3 z-20 space-y-2">
+          
+          <!-- Quick Tip Banner (High Visibility Highlight) -->
+          <div class="bg-gradient-to-r from-emerald-950/90 via-slate-900/90 to-cyan-950/90 backdrop-blur-md border border-emerald-500/50 rounded-2xl p-3 shadow-xl flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-sm shrink-0">
+              💡
+            </div>
+            <div class="space-y-0.5 leading-tight">
+              <span class="text-[9px] font-black uppercase text-emerald-400 tracking-wider block">Real-Time Tactical Tip</span>
+              <p id="hud-quick-tip" class="text-xs font-bold text-white leading-tight">
+                Tap "Start Live Session" to activate Gemini 2s vision loop.
+              </p>
+            </div>
+          </div>
+
+          <!-- Position, Shot & Stance Grid -->
+          <div class="grid grid-cols-3 gap-2">
+            <!-- Position Card -->
+            <div class="bg-slate-950/90 backdrop-blur-md border border-slate-800 rounded-xl p-2.5 shadow-lg text-center space-y-0.5">
+              <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider block">Court Position</span>
+              <span id="hud-position" class="text-xs font-black text-cyan-400 block truncate">CENTER COURT</span>
+            </div>
+
+            <!-- Shot Card -->
+            <div class="bg-slate-950/90 backdrop-blur-md border border-slate-800 rounded-xl p-2.5 shadow-lg text-center space-y-0.5">
+              <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider block">Last Shot</span>
+              <span id="hud-shot-type" class="text-xs font-black text-emerald-400 block truncate">READY STANCE</span>
+            </div>
+
+            <!-- Stance Score Card -->
+            <div class="bg-slate-950/90 backdrop-blur-md border border-slate-800 rounded-xl p-2.5 shadow-lg text-center space-y-0.5">
+              <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider block">Stance Score</span>
+              <span id="hud-stance-score" class="text-xs font-black text-amber-400 block">85%</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Action Controls Section below Camera -->
+      <div class="bg-slate-900 p-4 sm:p-5 space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          
+          <button id="start-session-btn" class="py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-400 hover:from-emerald-400 hover:to-cyan-300 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2">
+            <span>🔴 Start Live Camera Session</span>
+          </button>
+
+          <button id="stop-session-btn" disabled class="py-3.5 px-4 rounded-xl bg-slate-800 text-slate-500 font-black text-xs uppercase tracking-wider border border-slate-700 transition-all flex items-center justify-center gap-2 cursor-not-allowed">
+            <span>⏹ Stop Session & View Summary</span>
+          </button>
+
+        </div>
+
+        <div class="flex items-center justify-between pt-2 text-[11px] text-slate-400">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="demo-mode-checkbox" class="w-4 h-4 rounded bg-slate-950 border-slate-800 text-emerald-500 focus:ring-0">
+            <span>Enable Simulation Mode (For Desktop / Restricted Cameras)</span>
+          </label>
+
+          <span class="font-mono text-emerald-400">FPS: 0.5 (2s interval)</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Live Analysis Session Feed Log -->
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div>
+          <h2 class="text-base font-extrabold text-white flex items-center gap-2">
+            <span>📜</span> Live Frame Detections Log
+          </h2>
+          <p class="text-xs text-slate-400">Real-time Gemini 1.5 Flash classification stream</p>
+        </div>
+        <span id="log-count-badge" class="px-2.5 py-1 rounded-full bg-slate-950 border border-slate-800 text-slate-300 text-[10px] font-mono font-bold">
+          0 Frames Logged
+        </span>
+      </div>
+
+      <div id="live-feed-log" class="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+        <div class="text-center py-8 text-slate-500 text-xs italic">
+          No live frames captured yet. Tap "Start Live Camera Session" to begin capturing frames every 2 seconds.
+        </div>
+      </div>
+    </div>
+
+    <!-- Post-Session Summary Modal / Drawer -->
+    <div id="summary-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 space-y-6 shadow-2xl overflow-y-auto max-h-[90vh]">
+        
+        <div class="flex items-start justify-between pb-4 border-b border-slate-800">
+          <div class="space-y-1">
+            <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase">
+              🏆 Warmup Session Complete
+            </span>
+            <h2 class="text-xl font-black text-white">Live Match Session Summary</h2>
+            <p class="text-xs text-slate-400">Synthesized Gemini Vision court movement & stroke trends</p>
+          </div>
+          <button id="close-summary-btn" class="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition-colors text-xs font-bold">
+            ✕
+          </button>
+        </div>
+
+        <!-- Summary Metric Cards -->
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 text-center space-y-1">
+            <span class="text-[10px] text-slate-400 uppercase font-extrabold block">Frames Analyzed</span>
+            <span id="sum-total-frames" class="text-2xl font-black text-white">0</span>
+          </div>
+
+          <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 text-center space-y-1">
+            <span class="text-[10px] text-slate-400 uppercase font-extrabold block">Avg Stance Score</span>
+            <span id="sum-avg-stance" class="text-2xl font-black text-emerald-400">0%</span>
+          </div>
+
+          <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 text-center space-y-1 col-span-2">
+            <span class="text-[10px] text-slate-400 uppercase font-extrabold block">Dominant Court Position</span>
+            <span id="sum-top-position" class="text-lg font-black text-cyan-400">BACK LEFT CORNER (42%)</span>
+          </div>
+        </div>
+
+        <!-- Detected Shots Breakdown -->
+        <div class="space-y-2">
+          <h3 class="text-xs font-extrabold text-slate-300 uppercase tracking-wider">Detected Shot Distribution</h3>
+          <div id="sum-shots-breakdown" class="flex flex-wrap gap-2">
+            <!-- Dynamic tags -->
+          </div>
+        </div>
+
+        <!-- Key Tactical Trends & Recommendations -->
+        <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+          <h3 class="text-xs font-extrabold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+            <span>⚡</span> Key Tactical Trends & Coaching Insights
+          </h3>
+          <ul id="sum-tactical-insights" class="space-y-1.5 text-xs text-slate-300 leading-relaxed">
+            <!-- Dynamic tips -->
+          </ul>
+        </div>
+
+        <div class="flex items-center gap-3 pt-2">
+          <button id="restart-session-btn" class="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider transition-all">
+            Start New Warmup Session
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    let isSessionActive = false;
+    let cameraStream = null;
+    let frameIntervalId = null;
+    let frameCounter = 0;
+    let facingMode = 'environment';
+    let sessionLog = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('start-session-btn').addEventListener('click', startSession);
+      document.getElementById('stop-session-btn').addEventListener('click', stopSession);
+      document.getElementById('flip-camera-btn').addEventListener('click', toggleCameraFacing);
+      document.getElementById('close-summary-btn').addEventListener('click', hideSummaryModal);
+      document.getElementById('restart-session-btn').addEventListener('click', () => {
+        hideSummaryModal();
+        startSession();
+      });
+    });
+
+    async function toggleCameraFacing() {
+      facingMode = facingMode === 'environment' ? 'user' : 'environment';
+      if (isSessionActive && cameraStream) {
+        stopCameraTracks();
+        await initCameraStream();
+      }
+    }
+
+    function stopCameraTracks() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(t => t.stop());
+        cameraStream = null;
+      }
+    }
+
+    async function initCameraStream() {
+      const videoEl = document.getElementById('camera-video');
+      const simView = document.getElementById('simulated-viewfinder');
+      const isDemo = document.getElementById('demo-mode-checkbox').checked;
+
+      if (isDemo) {
+        videoEl.classList.add('hidden');
+        simView.classList.remove('hidden');
+        return true;
+      }
+
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: facingMode,
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false
+        });
+
+        videoEl.srcObject = cameraStream;
+        videoEl.classList.remove('hidden');
+        simView.classList.add('hidden');
+        return true;
+      } catch (err) {
+        console.warn('Camera access error or restricted iframe. Switching to demo simulation mode:', err);
+        document.getElementById('demo-mode-checkbox').checked = true;
+        videoEl.classList.add('hidden');
+        simView.classList.remove('hidden');
+        return true;
+      }
+    }
+
+    async function startSession() {
+      if (isSessionActive) return;
+
+      sessionLog = [];
+      frameCounter = 0;
+      isSessionActive = true;
+
+      await initCameraStream();
+
+      // Update UI buttons & badges
+      document.getElementById('start-session-btn').disabled = true;
+      document.getElementById('start-session-btn').classList.add('opacity-50', 'cursor-not-allowed');
+
+      const stopBtn = document.getElementById('stop-session-btn');
+      stopBtn.disabled = false;
+      stopBtn.classList.remove('text-slate-500', 'bg-slate-800', 'cursor-not-allowed');
+      stopBtn.classList.add('bg-rose-600', 'hover:bg-rose-500', 'text-white', 'shadow-lg', 'shadow-rose-600/20');
+
+      document.getElementById('live-indicator-dot').className = 'w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping';
+      document.getElementById('live-status-text').textContent = 'LIVE AI LOOP';
+      document.getElementById('live-status-text').className = 'text-rose-400 font-extrabold';
+
+      // Clear log container
+      document.getElementById('live-feed-log').innerHTML = '';
+
+      // Immediately send first frame, then repeat every 2000ms
+      captureAndSendFrame();
+      frameIntervalId = setInterval(captureAndSendFrame, 2000);
+    }
+
+    async function captureAndSendFrame() {
+      if (!isSessionActive) return;
+
+      frameCounter++;
+      document.getElementById('frame-counter-badge').textContent = `${frameCounter} FRAMES`;
+
+      const videoEl = document.getElementById('camera-video');
+      const canvas = document.getElementById('capture-canvas');
+      const ctx = canvas.getContext('2d');
+      const isDemo = document.getElementById('demo-mode-checkbox').checked;
+
+      let base64Data = '';
+
+      if (!isDemo && videoEl.readyState === videoEl.HAVE_ENOUGH_DATA) {
+        ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+        base64Data = canvas.toDataURL('image/jpeg', 0.6);
+      } else {
+        // Fallback simulation image data
+        base64Data = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD...';
+      }
+
+      try {
+        const res = await fetch('/api/live_frame', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            image: base64Data,
+            frame_idx: frameCounter
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          updateLiveHUD(data);
+          logFrameResult(data);
+        }
+      } catch (err) {
+        console.error('Error sending live camera frame:', err);
+      }
+    }
+
+    function updateLiveHUD(data) {
+      document.getElementById('hud-position').textContent = data.position || 'CENTER COURT';
+      document.getElementById('hud-shot-type').textContent = data.shot_type || 'READY STANCE';
+      document.getElementById('hud-stance-score').textContent = `${data.stance_score || 85}%`;
+      document.getElementById('hud-quick-tip').textContent = data.quick_tip || 'Maintain split-step timing upon opponent contact.';
+
+      // Stance score color
+      const scoreEl = document.getElementById('hud-stance-score');
+      if (data.stance_score >= 85) {
+        scoreEl.className = 'text-xs font-black text-emerald-400 block';
+      } else if (data.stance_score >= 70) {
+        scoreEl.className = 'text-xs font-black text-amber-400 block';
+      } else {
+        scoreEl.className = 'text-xs font-black text-rose-400 block';
+      }
+    }
+
+    function logFrameResult(data) {
+      sessionLog.push(data);
+
+      const container = document.getElementById('live-feed-log');
+      document.getElementById('log-count-badge').textContent = `${sessionLog.length} Frames Logged`;
+
+      const item = document.createElement('div');
+      item.className = 'bg-slate-950/80 border border-slate-800 p-3 rounded-2xl flex items-center justify-between text-xs space-x-2 animate-fadeIn';
+
+      item.innerHTML = `
+        <div class="space-y-0.5">
+          <div class="flex items-center gap-2">
+            <span class="font-mono text-[10px] text-slate-400">#${sessionLog.length} • ${data.timestamp || 'Now'}</span>
+            <span class="px-2 py-0.2 rounded-full bg-cyan-500/10 text-cyan-400 text-[9px] font-bold border border-cyan-500/20">${data.position}</span>
+          </div>
+          <p class="font-extrabold text-white">${data.shot_type} <span class="text-emerald-400 font-normal">(${data.stance_score}% Stance)</span></p>
+          <p class="text-[11px] text-slate-300 italic">💡 "${data.quick_tip}"</p>
+        </div>
+        <div class="text-right shrink-0">
+          <span class="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 block">
+            ${data.model || 'Gemini 1.5'}
+          </span>
+        </div>
+      `;
+
+      container.prepend(item);
+    }
+
+    function stopSession() {
+      if (!isSessionActive) return;
+
+      isSessionActive = false;
+      if (frameIntervalId) {
+        clearInterval(frameIntervalId);
+        frameIntervalId = null;
+      }
+
+      stopCameraTracks();
+
+      // Reset UI
+      document.getElementById('start-session-btn').disabled = false;
+      document.getElementById('start-session-btn').classList.remove('opacity-50', 'cursor-not-allowed');
+
+      const stopBtn = document.getElementById('stop-session-btn');
+      stopBtn.disabled = true;
+      stopBtn.className = 'py-3.5 px-4 rounded-xl bg-slate-800 text-slate-500 font-black text-xs uppercase tracking-wider border border-slate-700 transition-all flex items-center justify-center gap-2 cursor-not-allowed';
+
+      document.getElementById('live-indicator-dot').className = 'w-2.5 h-2.5 rounded-full bg-slate-500';
+      document.getElementById('live-status-text').textContent = 'OFFLINE';
+      document.getElementById('live-status-text').className = 'text-slate-400 font-extrabold';
+
+      showSummaryModal();
+    }
+
+    function showSummaryModal() {
+      const modal = document.getElementById('summary-modal');
+      modal.classList.remove('hidden');
+
+      // Compute statistics from sessionLog
+      const totalFrames = sessionLog.length;
+      document.getElementById('sum-total-frames').textContent = totalFrames;
+
+      if (totalFrames === 0) {
+        document.getElementById('sum-avg-stance').textContent = 'N/A';
+        document.getElementById('sum-top-position').textContent = 'No Data Captured';
+        document.getElementById('sum-shots-breakdown').innerHTML = '<span class="text-xs text-slate-500">No shots logged during session.</span>';
+        document.getElementById('sum-tactical-insights').innerHTML = '<li>Run a 2-second live analysis session to generate insights.</li>';
+        return;
+      }
+
+      // Average stance score
+      const avgStance = Math.round(sessionLog.reduce((acc, curr) => acc + (curr.stance_score || 80), 0) / totalFrames);
+      document.getElementById('sum-avg-stance').textContent = `${avgStance}%`;
+
+      // Dominant Position
+      const posCounts = {};
+      const shotCounts = {};
+      const tipsSet = new Set();
+
+      sessionLog.forEach(item => {
+        if (item.position) posCounts[item.position] = (posCounts[item.position] || 0) + 1;
+        if (item.shot_type) shotCounts[item.shot_type] = (shotCounts[item.shot_type] || 0) + 1;
+        if (item.quick_tip) tipsSet.add(item.quick_tip);
+      });
+
+      let topPos = 'CENTER COURT';
+      let maxPosCnt = 0;
+      Object.entries(posCounts).forEach(([pos, cnt]) => {
+        if (cnt > maxPosCnt) {
+          maxPosCnt = cnt;
+          topPos = pos;
+        }
+      });
+
+      const posPct = Math.round((maxPosCnt / totalFrames) * 100);
+      document.getElementById('sum-top-position').textContent = `${topPos} (${posPct}%)`;
+
+      // Shot breakdown
+      const shotsContainer = document.getElementById('sum-shots-breakdown');
+      shotsContainer.innerHTML = '';
+      Object.entries(shotCounts).forEach(([shot, cnt]) => {
+        const badge = document.createElement('span');
+        badge.className = 'px-3 py-1 rounded-full bg-slate-950 border border-slate-800 text-slate-200 text-xs font-bold flex items-center gap-1.5';
+        badge.innerHTML = `<span>🏸 ${shot}:</span> <strong class="text-emerald-400">${cnt}</strong>`;
+        shotsContainer.appendChild(badge);
+      });
+
+      // Tactical insights
+      const tipsList = document.getElementById('sum-tactical-insights');
+      tipsList.innerHTML = '';
+      Array.from(tipsSet).slice(0, 4).forEach(tip => {
+        const li = document.createElement('li');
+        li.className = 'flex items-start gap-2';
+        li.innerHTML = `<span class="text-emerald-400 mt-0.5">▪</span> <span>${tip}</span>`;
+        tipsList.appendChild(li);
+      });
+    }
+
+    function hideSummaryModal() {
+      document.getElementById('summary-modal').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>

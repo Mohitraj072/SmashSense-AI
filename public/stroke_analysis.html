@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Real-Time Stroke Analysis - SmashSense.AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN for Stroke Frequency Pie Chart -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brandBg: '#0A0F1E',
+            brandCard: '#111827',
+            brandBorder: '#1F2937',
+            brandAccent: '#00C853',
+            brandWarning: '#FF6B35',
+            brandInfo: '#3B82F6',
+            brandTextPrimary: '#F9FAFB',
+            brandTextSecondary: '#9CA3AF',
+            brandSuccess: '#10B981',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#0A0F1E] text-[#F9FAFB] font-sans antialiased min-h-screen">
+
+  <div id="navbar-container"></div>
+  <script src="/navbar.js"></script>
+
+  <main class="max-w-7xl mx-auto space-y-8 p-4 sm:p-6 lg:p-8 pb-24">
+
+    <!-- Page Header -->
+    <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-black uppercase tracking-wide flex items-center gap-1.5">
+            <span>🏸</span> Real-Time Stroke Detection
+          </span>
+          <span class="px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold font-mono">
+            MediaPipe Pose + OpenCV
+          </span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
+          Computer Vision Stroke Classification & Technique Analysis
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-400">
+          Automated arm angle, wrist velocity, and body position tracking across all 5 stroke categories.
+        </p>
+      </div>
+
+      <a href="/dashboard.html" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 transition-all flex items-center gap-2">
+        <span>← Back to Dashboard</span>
+      </a>
+    </header>
+
+    <!-- Upload & Control Banner -->
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-6">
+      <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
+        
+        <!-- Video Upload Dropzone -->
+        <div class="w-full lg:w-1/2 space-y-2">
+          <label class="block text-xs font-extrabold text-slate-300 uppercase tracking-wider">
+            Upload Match Video for Real-Time Analysis
+          </label>
+          <div id="video-dropzone" class="border-2 border-dashed border-slate-700 hover:border-emerald-500 bg-slate-950/80 rounded-2xl p-4 text-center cursor-pointer transition-all flex flex-col items-center justify-center space-y-2">
+            <div class="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-lg">
+              📹
+            </div>
+            <div class="space-y-0.5">
+              <p class="text-xs font-bold text-white">Drag & Drop match video or <span class="text-emerald-400 underline">Browse File</span></p>
+              <p class="text-[10px] text-slate-400">Supports MP4, MOV, AVI up to 500MB (60 FPS recommended)</p>
+            </div>
+            <input type="file" id="video-file-input" accept="video/*" class="hidden" />
+          </div>
+        </div>
+
+        <!-- Sample Match Selection & Action Button -->
+        <div class="w-full lg:w-1/2 space-y-4 flex flex-col justify-between">
+          <div class="space-y-2">
+            <label class="block text-xs font-extrabold text-slate-300 uppercase tracking-wider">
+              Or Select Saved Match Session
+            </label>
+            <select id="stroke-match-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white font-medium focus:outline-none focus:border-emerald-500 transition-colors">
+              <option value="match_01">Semi-Final vs Marcus Vance (Badminton)</option>
+              <option value="match_02">Quarter-Final vs Vikram Patel (Badminton)</option>
+              <option value="match_03">Clay Court Championship vs Carlos (Tennis)</option>
+            </select>
+          </div>
+
+          <button id="analyze-stroke-btn" class="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-400 hover:from-emerald-400 hover:to-cyan-300 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2">
+            <span>⚡ Run MediaPipe Frame-by-Frame Stroke Detection</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Overview Stats Bar -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg space-y-1">
+        <span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Total Strokes Detected</span>
+        <span id="stat-total-strokes" class="text-3xl font-black text-white">63</span>
+        <span class="text-[10px] text-emerald-400 font-bold block">Across 5 Categories</span>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg space-y-1">
+        <span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Overall Technique Score</span>
+        <span id="stat-overall-technique" class="text-3xl font-black text-emerald-400">85%</span>
+        <span class="text-[10px] text-slate-400 font-bold block">Arm & Wrist Alignment</span>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg space-y-1">
+        <span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Most Frequent Stroke</span>
+        <span id="stat-top-stroke" class="text-xl font-black text-cyan-400 truncate block">Clear (16)</span>
+        <span class="text-[10px] text-slate-400 font-bold block">Deep High Trajectory</span>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg space-y-1">
+        <span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Technique Warnings</span>
+        <span id="stat-warnings-count" class="text-3xl font-black text-amber-400">2</span>
+        <span class="text-[10px] text-amber-400/80 font-bold block">Elbow & Wrist Flags</span>
+      </div>
+    </div>
+
+    <!-- Main Content: Pie Chart vs Technique Score Bars -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- Left Column: Stroke Frequency Pie Chart (Chart.js) -->
+      <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4 flex flex-col justify-between">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div>
+            <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+              <span>📊</span> Stroke Frequency Distribution
+            </h3>
+            <p class="text-xs text-slate-400">Breakdown of total detected strokes</p>
+          </div>
+          <span class="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-extrabold border border-emerald-500/20">
+            5 Categories
+          </span>
+        </div>
+
+        <div class="relative w-full h-64 flex items-center justify-center p-2">
+          <canvas id="strokePieChart"></canvas>
+        </div>
+
+        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 text-[11px] text-slate-400 space-y-1 text-center">
+          <span class="font-bold text-slate-200">💡 Tactical Insight:</span>
+          <p id="pie-tactical-tip">High proportion of Clears (25%) indicates defensive play under pressure.</p>
+        </div>
+      </div>
+
+      <!-- Right Column: Technique Score Bars for Each Stroke -->
+      <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-5">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div>
+            <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+              <span>🎯</span> Stroke Technique Scores
+            </h3>
+            <p class="text-xs text-slate-400">Joint angle accuracy & posture execution (0%–100%)</p>
+          </div>
+          <div class="flex items-center gap-2 text-[10px] font-bold">
+            <span class="flex items-center gap-1 text-emerald-400"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> ≥85% Good</span>
+            <span class="flex items-center gap-1 text-amber-400"><span class="w-2 h-2 rounded-full bg-amber-400"></span> 70-84% Warning</span>
+            <span class="flex items-center gap-1 text-rose-400"><span class="w-2 h-2 rounded-full bg-rose-500"></span> &lt;70% Risk</span>
+          </div>
+        </div>
+
+        <div id="technique-bars-container" class="space-y-4">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Frame-by-Frame Timestamp Log Table -->
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-3 border-b border-slate-800">
+        <div>
+          <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+            <span>⏱️</span> Frame-by-Frame Stroke Timestamp Log
+          </h3>
+          <p class="text-xs text-slate-400">Exact frame index, wrist speed, arm angle, and MediaPipe confidence</p>
+        </div>
+
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <select id="stroke-filter-select" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-medium focus:outline-none focus:border-emerald-500">
+            <option value="ALL">All Stroke Types</option>
+            <option value="Smash">Smash</option>
+            <option value="Drop shot">Drop shot</option>
+            <option value="Net shot">Net shot</option>
+            <option value="Clear">Clear</option>
+            <option value="Drive">Drive</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-800">
+              <th class="pb-2.5">Time / Frame</th>
+              <th class="pb-2.5">Detected Stroke</th>
+              <th class="pb-2.5">Arm Angle</th>
+              <th class="pb-2.5">Wrist Speed</th>
+              <th class="pb-2.5">Confidence</th>
+              <th class="pb-2.5">Technique Note</th>
+              <th class="pb-2.5 text-right">Status</th>
+            </tr>
+          </thead>
+          <tbody id="timestamps-tbody" class="divide-y divide-slate-800/60 text-slate-200">
+            <!-- Populated dynamically via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Specific Correction Tips per Stroke Type -->
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-6">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div>
+          <h2 class="text-base font-extrabold text-white flex items-center gap-2">
+            <span>🔧</span> Specific Technical Corrections per Stroke Type
+          </h2>
+          <p class="text-xs text-slate-400">Biomechanics-driven adjustments to improve power and eliminate errors</p>
+        </div>
+        <span class="px-2.5 py-1 rounded-full bg-cyan-500/15 text-cyan-400 text-[10px] font-extrabold border border-cyan-500/30">
+          Biomechanical Guidance
+        </span>
+      </div>
+
+      <div id="corrections-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <!-- Populated dynamically via JS -->
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    let pieChartInstance = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await fetchStrokeData();
+
+      document.getElementById('analyze-stroke-btn').addEventListener('click', fetchStrokeData);
+      document.getElementById('stroke-match-select').addEventListener('change', fetchStrokeData);
+      document.getElementById('stroke-filter-select').addEventListener('change', filterTimestamps);
+
+      // File upload dropzone handler
+      const dropzone = document.getElementById('video-dropzone');
+      const fileInput = document.getElementById('video-file-input');
+
+      dropzone.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+          fetchStrokeData();
+        }
+      });
+    });
+
+    let currentTimestamps = [];
+
+    async function fetchStrokeData() {
+      const btn = document.getElementById('analyze-stroke-btn');
+      const matchId = document.getElementById('stroke-match-select').value;
+
+      btn.innerHTML = '<span>🔄 Running OpenCV & MediaPipe Pose Analysis...</span>';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`/api/stroke_analysis?matchId=${encodeURIComponent(matchId)}`);
+        if (res.ok) {
+          const data = await res.json();
+          renderStrokePage(data);
+        }
+      } catch (err) {
+        console.error('Error fetching stroke analysis data:', err);
+      } finally {
+        btn.innerHTML = '<span>⚡ Run MediaPipe Frame-by-Frame Stroke Detection</span>';
+        btn.disabled = false;
+      }
+    }
+
+    function renderStrokePage(data) {
+      // 1. Overview Stats
+      document.getElementById('stat-total-strokes').textContent = data.total_strokes || 63;
+      document.getElementById('stat-overall-technique').textContent = `${data.overall_technique_score || 85}%`;
+
+      // Find top stroke
+      const strokeCounts = data.stroke_counts || {};
+      let topStroke = 'Clear';
+      let maxCount = 0;
+      Object.entries(strokeCounts).forEach(([st, cnt]) => {
+        if (cnt > maxCount) {
+          maxCount = cnt;
+          topStroke = st;
+        }
+      });
+      document.getElementById('stat-top-stroke').textContent = `${topStroke} (${maxCount})`;
+
+      // 2. Render Pie Chart (Chart.js)
+      renderPieChart(strokeCounts);
+
+      // 3. Render Technique Score Bars
+      renderTechniqueBars(data.technique_scores || {});
+
+      // 4. Render Timestamps Log
+      currentTimestamps = data.timestamps || [];
+      filterTimestamps();
+
+      // 5. Render Corrections Grid
+      renderCorrectionsGrid(data.corrections || {});
+    }
+
+    function renderPieChart(counts) {
+      const ctx = document.getElementById('strokePieChart').getContext('2d');
+      if (pieChartInstance) {
+        pieChartInstance.destroy();
+      }
+
+      const labels = Object.keys(counts);
+      const dataValues = Object.values(counts);
+      const backgroundColors = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6'];
+
+      pieChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels,
+          datasets: [{
+            data: dataValues,
+            backgroundColor: backgroundColors,
+            borderColor: '#111827',
+            borderWidth: 3,
+            hoverOffset: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: '#9CA3AF',
+                font: { family: 'Inter', size: 11, weight: '600' },
+                padding: 14,
+                usePointStyle: true,
+                pointStyle: 'circle'
+              }
+            },
+            tooltip: {
+              backgroundColor: '#0A0F1E',
+              titleColor: '#F9FAFB',
+              bodyColor: '#34D399',
+              borderColor: '#1F2937',
+              borderWidth: 1,
+              padding: 10
+            }
+          },
+          cutout: '65%'
+        }
+      });
+    }
+
+    function renderTechniqueBars(scores) {
+      const container = document.getElementById('technique-bars-container');
+      container.innerHTML = '';
+
+      const strokeDetails = {
+        "Smash": { desc: "Arm raised high, fast downward snap", ideal: "Elbow extension 150°-170°" },
+        "Drop shot": { desc: "Soft racket velocity, downward angle", ideal: "Arm preparation identical to smash" },
+        "Net shot": { desc: "Low position, delicate wrist flick", ideal: "Flat racket face tilt 45°" },
+        "Clear": { desc: "High extended contact, deep follow-through", ideal: "Full vertical arm reach" },
+        "Drive": { desc: "Fast horizontal arm swing", ideal: "Chest height swing path" }
+      };
+
+      Object.entries(scores).forEach(([stroke, score]) => {
+        let barColor = 'bg-emerald-500';
+        let textColor = 'text-emerald-400';
+        let badgeClass = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
+        let badgeText = 'OPTIMAL';
+
+        if (score < 70) {
+          barColor = 'bg-rose-500';
+          textColor = 'text-rose-400';
+          badgeClass = 'bg-rose-500/15 text-rose-400 border-rose-500/30';
+          badgeText = 'CRITICAL';
+        } else if (score < 85) {
+          barColor = 'bg-amber-500';
+          textColor = 'text-amber-400';
+          badgeClass = 'bg-amber-500/15 text-amber-400 border-amber-500/30';
+          badgeText = 'NEEDS WORK';
+        }
+
+        const details = strokeDetails[stroke] || { desc: '', ideal: '' };
+
+        const item = document.createElement('div');
+        item.className = 'space-y-1.5 bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800';
+        item.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-xs font-black text-white block">${stroke}</span>
+              <span class="text-[10px] text-slate-400">${details.desc}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-black font-mono ${textColor}">${score}%</span>
+              <span class="px-2 py-0.5 rounded-full text-[9px] font-black border ${badgeClass}">
+                ${badgeText}
+              </span>
+            </div>
+          </div>
+          <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
+            <div class="${barColor} h-full rounded-full transition-all duration-500" style="width: ${score}%"></div>
+          </div>
+          <p class="text-[10px] text-slate-400 font-mono">Target criteria: ${details.ideal}</p>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function filterTimestamps() {
+      const filter = document.getElementById('stroke-filter-select').value;
+      const tbody = document.getElementById('timestamps-tbody');
+      tbody.innerHTML = '';
+
+      const list = filter === 'ALL' ? currentTimestamps : currentTimestamps.filter(t => t.stroke === filter);
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">No stroke events found for filter: ${filter}</td></tr>`;
+        return;
+      }
+
+      list.forEach(t => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-850/50 transition-colors';
+
+        let badgeClass = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
+        let badgeText = 'GOOD';
+        if (t.technique_status === 'risk') {
+          badgeClass = 'bg-rose-500/15 text-rose-400 border-rose-500/30';
+          badgeText = 'RISK';
+        } else if (t.technique_status === 'warning') {
+          badgeClass = 'bg-amber-500/15 text-amber-400 border-amber-500/30';
+          badgeText = 'WARNING';
+        }
+
+        tr.innerHTML = `
+          <td class="py-3 font-mono text-slate-300">
+            <span class="font-bold text-white block">${t.timestamp}</span>
+            <span class="text-[9px] text-slate-500 block">Frame #${t.frame_idx}</span>
+          </td>
+          <td class="py-3 font-bold text-white">${t.stroke}</td>
+          <td class="py-3 font-mono text-slate-300">${t.arm_angle}</td>
+          <td class="py-3 font-mono text-cyan-400 font-bold">${t.wrist_speed}</td>
+          <td class="py-3 font-mono text-emerald-400 font-bold">${Math.round(t.confidence * 100)}%</td>
+          <td class="py-3 text-slate-300 text-[11px] max-w-xs leading-tight">${t.note}</td>
+          <td class="py-3 text-right">
+            <span class="px-2 py-0.5 rounded-full text-[9px] font-black border ${badgeClass}">
+              ${badgeText}
+            </span>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderCorrectionsGrid(corrections) {
+      const grid = document.getElementById('corrections-grid');
+      grid.innerHTML = '';
+
+      const strokeIcons = {
+        "Smash": "⚡",
+        "Drop shot": "🎯",
+        "Net shot": "🏸",
+        "Clear": "🚀",
+        "Drive": "💥"
+      };
+
+      Object.entries(corrections).forEach(([stroke, tips]) => {
+        const card = document.createElement('div');
+        card.className = 'bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-3 flex flex-col justify-between hover:border-emerald-500/40 transition-colors';
+
+        const icon = strokeIcons[stroke] || "🏸";
+
+        let tipsHtml = tips.map(tip => `
+          <li class="flex items-start gap-2 text-xs text-slate-300 leading-relaxed">
+            <span class="text-emerald-400 mt-0.5">▪</span>
+            <span>${tip}</span>
+          </li>
+        `).join('');
+
+        card.innerHTML = `
+          <div class="space-y-3">
+            <div class="flex items-center gap-2.5 pb-2 border-b border-slate-800">
+              <span class="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-base">
+                ${icon}
+              </span>
+              <h4 class="text-sm font-extrabold text-white">${stroke} Technical Corrections</h4>
+            </div>
+            <ul class="space-y-2">
+              ${tipsHtml}
+            </ul>
+          </div>
+          <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400">
+            <span>Angle & Speed Rule Active</span>
+            <span class="text-emerald-400 font-bold">MediaPipe Pose Verified</span>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+  </script>
+</body>
+</html>

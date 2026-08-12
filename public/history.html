@@ -78,17 +78,29 @@
       
       <!-- Filter Buttons Row -->
       <div class="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0" id="filter-buttons">
-        <button data-filter="All" class="filter-btn active-filter px-4 py-2 rounded-xl text-xs font-bold transition-all bg-[#00C853] text-[#0A0F1E] shadow-md shadow-[#00C853]/20 cursor-pointer">
+        <button data-filter="All" class="filter-btn active-filter px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-[#00C853] text-[#0A0F1E] shadow-md shadow-[#00C853]/20 cursor-pointer shrink-0">
           All
         </button>
-        <button data-filter="Wins" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold transition-all bg-[#0A0F1E] text-[#9CA3AF] hover:text-[#F9FAFB] border border-[#1F2937] hover:border-[#374151] cursor-pointer">
+        <button data-sport="Badminton" class="sport-filter-btn px-3 py-2 rounded-xl text-xs font-bold transition-all bg-[#0A0F1E] text-[#9CA3AF] hover:text-[#F9FAFB] border border-[#1F2937] hover:border-[#374151] cursor-pointer shrink-0">
+          🏸 Badminton
+        </button>
+        <button data-sport="Tennis" class="sport-filter-btn px-3 py-2 rounded-xl text-xs font-bold transition-all bg-[#0A0F1E] text-[#9CA3AF] hover:text-[#F9FAFB] border border-[#1F2937] hover:border-[#374151] cursor-pointer shrink-0">
+          🎾 Tennis
+        </button>
+        <button data-sport="Squash" class="sport-filter-btn px-3 py-2 rounded-xl text-xs font-bold transition-all bg-[#0A0F1E] text-[#9CA3AF] hover:text-[#F9FAFB] border border-[#1F2937] hover:border-[#374151] cursor-pointer shrink-0">
+          💥 Squash
+        </button>
+        <button data-sport="Table Tennis" class="sport-filter-btn px-3 py-2 rounded-xl text-xs font-bold transition-all bg-[#0A0F1E] text-[#9CA3AF] hover:text-[#F9FAFB] border border-[#1F2937] hover:border-[#374151] cursor-pointer shrink-0">
+          🏓 Table Tennis
+        </button>
+        <button data-sport="Pickleball" class="sport-filter-btn px-3 py-2 rounded-xl text-xs font-bold transition-all bg-[#0A0F1E] text-[#9CA3AF] hover:text-[#F9FAFB] border border-[#1F2937] hover:border-[#374151] cursor-pointer shrink-0">
+          🥒 Pickleball
+        </button>
+        <button data-filter="Wins" class="filter-btn px-3 py-2 rounded-xl text-xs font-bold transition-all bg-[#0A0F1E] text-[#9CA3AF] hover:text-[#F9FAFB] border border-[#1F2937] hover:border-[#374151] cursor-pointer shrink-0">
           Wins
         </button>
-        <button data-filter="Losses" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold transition-all bg-[#0A0F1E] text-[#9CA3AF] hover:text-[#F9FAFB] border border-[#1F2937] hover:border-[#374151] cursor-pointer">
+        <button data-filter="Losses" class="filter-btn px-3 py-2 rounded-xl text-xs font-bold transition-all bg-[#0A0F1E] text-[#9CA3AF] hover:text-[#F9FAFB] border border-[#1F2937] hover:border-[#374151] cursor-pointer shrink-0">
           Losses
-        </button>
-        <button data-filter="This Month" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold transition-all bg-[#0A0F1E] text-[#9CA3AF] hover:text-[#F9FAFB] border border-[#1F2937] hover:border-[#374151] cursor-pointer">
-          This Month
         </button>
       </div>
 
@@ -120,8 +132,17 @@
   <script>
     let allMatches = [];
     let activeFilter = 'All';
+    let activeSportFilter = 'All';
     let searchTerm = '';
     let expandedMatchId = null;
+
+    function getSportIcon(sport) {
+      if (sport === 'Tennis') return '🎾';
+      if (sport === 'Squash') return '💥';
+      if (sport === 'Table Tennis') return '🏓';
+      if (sport === 'Pickleball') return '🥒';
+      return '🏸';
+    }
 
     async function fetchMatches() {
       try {
@@ -150,11 +171,12 @@
       const container = document.getElementById('match-cards-container');
       const badge = document.getElementById('match-badge');
 
-      badge.textContent = `${allMatches.length} ${allMatches.length === 1 ? 'Match' : 'Matches'}`;
-
       let filtered = allMatches.filter((m) => {
         const opponent = (m.opponentName || m.opponent_name || '').toLowerCase();
         const matchesSearch = opponent.includes(searchTerm.toLowerCase().trim());
+
+        const matchSport = m.sport || 'Badminton';
+        const matchesSport = activeSportFilter === 'All' || matchSport.toLowerCase() === activeSportFilter.toLowerCase();
 
         const isWin = m.result === 'Win' || m.result === 'WIN';
         const isLoss = m.result === 'Loss' || m.result === 'LOSS';
@@ -173,19 +195,21 @@
             matchDate.getFullYear() === now.getFullYear();
         }
 
-        return matchesSearch && matchesFilter;
+        return matchesSearch && matchesFilter && matchesSport;
       });
+
+      badge.textContent = `${filtered.length} ${filtered.length === 1 ? 'Match' : 'Matches'}`;
 
       if (!filtered || filtered.length === 0) {
         container.innerHTML = `
           <div class="bg-[#111827] border border-[#1F2937] rounded-2xl p-12 text-center space-y-4 flex flex-col items-center justify-center my-6">
             <div class="w-20 h-20 rounded-2xl bg-[#00C853]/10 border border-[#00C853]/20 flex items-center justify-center text-4xl text-[#00C853]">
-              🏸
+              ⚡
             </div>
             <div class="space-y-1.5 max-w-md">
-              <h3 class="text-xl font-bold text-[#F9FAFB]">No matches yet</h3>
+              <h3 class="text-xl font-bold text-[#F9FAFB]">No matches found</h3>
               <p class="text-sm text-[#9CA3AF] leading-relaxed">
-                Upload your first match video to receive comprehensive AI biomechanical & tactical breakdown.
+                No match records match your selected sport or filters.
               </p>
             </div>
             <a
@@ -193,7 +217,7 @@
               class="px-6 py-3 rounded-xl bg-[#00C853] hover:bg-[#00C853]/90 text-[#0A0F1E] font-bold text-sm shadow-lg shadow-[#00C853]/20 transition-all inline-flex items-center gap-2 cursor-pointer mt-2"
             >
               <span>🚀</span>
-              <span>Upload Your First Match</span>
+              <span>Upload New Match</span>
             </a>
           </div>
         `;
@@ -209,12 +233,14 @@
         const score = match.score || match.points || '21-18, 19-21, 21-15';
         const rating = match.overall_rating?.score || (isWin ? 8.5 : 6.8);
         const matchId = match.id || `m_${idx}`;
+        const sport = match.sport || 'Badminton';
+        const icon = getSportIcon(sport);
         const isExpanded = expandedMatchId === matchId;
 
         // Extracts 3 bullet points
         const vulnerability = match.player_weaknesses?.[0] || (match.weaknesses?.[0]?.description) || 'Late shoulder turn & footwork recovery in deep backhand corner.';
-        const tactical = match.opponent_strategy || match.aiSummary || 'Pin opponent to deep forehand corner to force weak net returns.';
-        const coachRec = match.improvement_areas?.[0] || (match.improvementAreas?.[0]?.drillName ? `${match.improvementAreas[0].drillName}: ${match.improvementAreas[0].drillDescription}` : 'Execute daily shadow footwork drills focused on rear recovery.');
+        const tactical = match.opponent_strategy || match.aiSummary || 'Pin opponent to deep corner to force weak returns.';
+        const coachRec = match.improvement_areas?.[0] || (match.improvementAreas?.[0]?.drillName ? `${match.improvementAreas[0].drillName}: ${match.improvementAreas[0].drillDescription}` : 'Execute daily shadow footwork drills.');
 
         const card = document.createElement('div');
         card.style.animationDelay = `${idx * 0.05}s`;
@@ -239,6 +265,9 @@
                   <h3 class="text-[18px] font-bold text-[#F9FAFB] leading-tight truncate">
                     ${opponent}
                   </h3>
+                  <span class="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-extrabold flex items-center gap-1">
+                    <span>${icon}</span> <span>${sport}</span>
+                  </span>
                   <span class="text-[10px] px-2 py-0.5 rounded-md bg-[#0A0F1E] border border-[#1F2937] text-[#9CA3AF] font-medium">
                     ${match.category || "Men's Singles"}
                   </span>
@@ -362,12 +391,28 @@
     // Filter button listeners
     document.querySelectorAll('.filter-btn').forEach((btn) => {
       btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.filter-btn').forEach((b) => {
-          b.className = 'filter-btn px-4 py-2 rounded-xl text-xs font-bold transition-all bg-[#0A0F1E] text-[#9CA3AF] hover:text-[#F9FAFB] border border-[#1F2937] hover:border-[#374151] cursor-pointer';
+        document.querySelectorAll('.filter-btn, .sport-filter-btn').forEach((b) => {
+          b.className = b.className.replace('bg-[#00C853] text-[#0A0F1E]', 'bg-[#0A0F1E] text-[#9CA3AF]');
+          b.classList.remove('active-filter', 'shadow-md', 'shadow-[#00C853]/20');
         });
 
-        e.target.className = 'filter-btn active-filter px-4 py-2 rounded-xl text-xs font-bold transition-all bg-[#00C853] text-[#0A0F1E] shadow-md shadow-[#00C853]/20 cursor-pointer';
-        activeFilter = e.target.getAttribute('data-filter');
+        e.target.className = 'filter-btn active-filter px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-[#00C853] text-[#0A0F1E] shadow-md shadow-[#00C853]/20 cursor-pointer shrink-0';
+        activeFilter = e.target.getAttribute('data-filter') || 'All';
+        activeSportFilter = 'All';
+        applyFiltersAndRender();
+      });
+    });
+
+    document.querySelectorAll('.sport-filter-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const targetBtn = e.target.closest('.sport-filter-btn');
+        document.querySelectorAll('.filter-btn, .sport-filter-btn').forEach((b) => {
+          b.className = b.className.replace('bg-[#00C853] text-[#0A0F1E]', 'bg-[#0A0F1E] text-[#9CA3AF]');
+          b.classList.remove('active-filter', 'shadow-md', 'shadow-[#00C853]/20');
+        });
+
+        targetBtn.className = 'sport-filter-btn active-filter px-3 py-2 rounded-xl text-xs font-bold transition-all bg-[#00C853] text-[#0A0F1E] shadow-md shadow-[#00C853]/20 cursor-pointer shrink-0';
+        activeSportFilter = targetBtn.getAttribute('data-sport');
         applyFiltersAndRender();
       });
     });

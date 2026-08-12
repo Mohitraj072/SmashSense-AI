@@ -12,6 +12,7 @@ import {
   Activity,
   Trophy,
   ExternalLink,
+  Share2,
   Trash2,
   Calendar,
   Clock,
@@ -304,12 +305,23 @@ export const MatchHistoryPage: React.FC<MatchHistoryPageProps> = ({
 
                       {/* Footer Actions Inside Expanded Card */}
                       <div className="pt-3 border-t border-[#1F2937] flex flex-wrap items-center justify-between gap-2">
-                        <button
-                          onClick={() => onSelectMatch(match)}
-                          className="px-3 py-1.5 rounded-lg bg-[#00C853]/10 hover:bg-[#00C853]/20 text-[#00C853] border border-[#00C853]/30 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" /> View Full Modal Breakdown
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => onSelectMatch(match)}
+                            className="px-3 py-1.5 rounded-lg bg-[#00C853]/10 hover:bg-[#00C853]/20 text-[#00C853] border border-[#00C853]/30 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" /> Full Modal Breakdown
+                          </button>
+
+                          <a
+                            href={`/results.html?id=${match.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-[#00C853] border border-[#00C853]/40 text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Share2 className="w-3.5 h-3.5" /> Share Report
+                          </a>
+                        </div>
 
                         <button
                           onClick={() => onDeleteMatch(match.id)}

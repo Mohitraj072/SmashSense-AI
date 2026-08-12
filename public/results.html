@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- html2canvas library for Option 1 Image Download -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -43,17 +45,24 @@
           ⚡
         </div>
         <div>
-          <h1 className="text-2xl font-black text-white tracking-tight">AI Match Performance Report</h1>
+          <h1 class="text-2xl font-black text-white tracking-tight">AI Match Performance Report</h1>
           <p class="text-xs text-slate-400">SmashSense.AI • Badminton Video Analytics</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-3">
-        <button onclick="location.href='/'" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 transition-all">
+      <div class="flex flex-wrap items-center gap-2.5">
+        <button onclick="location.href='/'" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 transition-all cursor-pointer">
           ← Main Dashboard
         </button>
-        <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold shadow-lg shadow-emerald-500/20 transition-all">
-          Print / Export Report
+        <button onclick="window.print()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 transition-all cursor-pointer">
+          Print / Export
+        </button>
+        <!-- SHARE REPORT BUTTON -->
+        <button onclick="openShareModal()" class="px-4 py-2 rounded-xl bg-[#00C853] hover:bg-[#00C853]/90 text-black text-xs font-black shadow-lg shadow-[#00C853]/20 transition-all flex items-center gap-1.5 cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+          </svg>
+          <span>Share Report</span>
         </button>
       </div>
     </header>
@@ -64,7 +73,7 @@
         <span class="inline-block px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold uppercase tracking-wider">
           Executive AI Evaluation
         </span>
-        <h2 class="text-2xl font-black text-white">Overall Match Score & Judgment</h2>
+        <h2 id="match-header-title" class="text-2xl font-black text-white">Overall Match Score & Judgment</h2>
         <p id="overall-reasoning" class="text-sm text-slate-300 leading-relaxed max-w-2xl">
           Loading AI match evaluation reasoning...
         </p>
@@ -72,7 +81,7 @@
 
       <div class="flex flex-col items-center justify-center bg-slate-950 px-8 py-6 rounded-2xl border border-slate-800 shrink-0 z-10 shadow-inner">
         <span class="text-xs text-slate-400 font-bold uppercase tracking-widest">Match Rating</span>
-        <div className="flex items-baseline gap-1 mt-1">
+        <div class="flex items-baseline gap-1 mt-1">
           <span id="overall-score-num" class="text-5xl font-black text-emerald-400">8.5</span>
           <span class="text-lg font-bold text-slate-500">/ 10</span>
         </div>
@@ -185,16 +194,178 @@
 
   </div>
 
-  <!-- Vanilla JS to Populate Data -->
+  <!-- SHARE REPORT MODAL -->
+  <div id="share-modal" class="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="bg-[#111827] border border-[#1F2937] rounded-3xl p-6 sm:p-8 max-w-lg w-full space-y-6 relative shadow-2xl">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-4 border-b border-[#1F2937]">
+        <div class="flex items-center gap-2.5">
+          <div class="p-2 rounded-xl bg-[#00C853]/15 text-[#00C853]">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-black text-white">Share Match Report</h3>
+            <p class="text-xs text-[#9CA3AF]">Export image card or copy public web link</p>
+          </div>
+        </div>
+        <button onclick="closeShareModal()" class="p-2 rounded-xl bg-[#0A0F1E] border border-[#1F2937] text-[#9CA3AF] hover:text-white transition-colors cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- OPTION 1: Download as Image -->
+      <div class="p-5 rounded-2xl bg-[#0A0F1E] border border-[#1F2937] space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded text-[10px] font-black bg-[#00C853]/15 text-[#00C853] border border-[#00C853]/30">OPTION 1</span>
+          <h4 class="text-sm font-bold text-white">Download as Image (PNG)</h4>
+        </div>
+        <p class="text-xs text-[#9CA3AF] leading-relaxed">
+          Generates a high-resolution summary card with player vs opponent stats, top 3 weaknesses, top 3 improvements, and overall rating badge.
+        </p>
+        <button id="download-png-btn" onclick="downloadReportImage()" class="w-full py-3 rounded-xl bg-[#00C853] hover:bg-[#00C853]/90 text-black text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#00C853]/20">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+          <span>Download Summary Card (PNG)</span>
+        </button>
+      </div>
+
+      <!-- OPTION 2: Public Share Link -->
+      <div class="p-5 rounded-2xl bg-[#0A0F1E] border border-[#1F2937] space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded text-[10px] font-black bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">OPTION 2</span>
+            <h4 class="text-sm font-bold text-white">Public Share Link</h4>
+          </div>
+          
+          <!-- Make Public Toggle -->
+          <label class="flex items-center gap-2 cursor-pointer">
+            <span class="text-[11px] font-bold text-[#9CA3AF]">Public</span>
+            <input type="checkbox" id="is-public-toggle" onchange="togglePublicVisibility()" class="sr-only peer" checked>
+            <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#00C853] relative"></div>
+          </label>
+        </div>
+
+        <p class="text-xs text-[#9CA3AF] leading-relaxed">
+          Generates a unique public URL <code class="text-emerald-400 font-mono">/report/&lt;match_id&gt;</code> with Open Graph tags for WhatsApp & LinkedIn previews.
+        </p>
+
+        <div class="flex items-center gap-2">
+          <input type="text" id="share-link-input" readonly value="" class="w-full px-3 py-2.5 rounded-xl bg-[#111827] border border-[#1F2937] text-xs font-mono text-[#00C853] focus:outline-none">
+          <button id="copy-link-btn" onclick="copyShareLink()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-extrabold border border-slate-700 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
+            </svg>
+            <span>Copy Link</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- HIDDEN SUMMARY CARD DIV FOR html2canvas CONVERSION -->
+  <div id="shareable-summary-card" style="display: none; width: 720px; background-color: #0A0F1E; color: #F9FAFB; font-family: 'Inter', sans-serif; padding: 32px; border-radius: 24px; border: 2px solid #1F2937; box-sizing: border-box;">
+    
+    <!-- Brand Header -->
+    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1F2937; padding-bottom: 16px; margin-bottom: 20px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #00C853, #06B6D4); display: flex; align-items: center; justify-content: center; color: #000000; font-weight: 900; font-size: 22px;">
+          ⚡
+        </div>
+        <div>
+          <div style="font-size: 19px; font-weight: 900; color: #FFFFFF; letter-spacing: -0.5px;">SmashSense<span style="color: #00C853;">.AI</span></div>
+          <div style="font-size: 10px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700;">Badminton Performance Analysis</div>
+        </div>
+      </div>
+      <div id="card-match-date" style="font-size: 12px; font-weight: 700; color: #9CA3AF; font-family: 'JetBrains Mono', monospace;">2026-08-02</div>
+    </div>
+
+    <!-- Player vs Opponent Header Banner -->
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; background: #111827; padding: 20px; border-radius: 16px; border: 1px solid #1F2937;">
+      <div>
+        <div style="font-size: 10px; font-weight: 800; color: #00C853; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">MATCH ANALYSIS REPORT</div>
+        <div id="card-match-title" style="font-size: 22px; font-weight: 900; color: #FFFFFF;">Alex Chen <span style="color: #00C853;">vs</span> Marcus Vance</div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+          <span id="card-result-badge" style="padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 900; background: rgba(255, 107, 53, 0.2); color: #FF6B35; border: 1px solid rgba(255, 107, 53, 0.4);">LOSS</span>
+          <span id="card-score-text" style="font-size: 12px; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #F9FAFB; background: #0A0F1E; padding: 4px 10px; border-radius: 6px; border: 1px solid #1F2937;">Score: 18-21, 21-19, 16-21</span>
+        </div>
+      </div>
+
+      <!-- Large Circular Overall AI Rating Badge -->
+      <div style="width: 88px; height: 88px; border-radius: 50%; border: 3px solid #00C853; background: rgba(0, 200, 83, 0.1); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(0, 200, 83, 0.15);">
+        <span style="font-size: 9px; font-weight: 800; color: #9CA3AF; text-transform: uppercase;">AI RATING</span>
+        <span id="card-rating-num" style="font-size: 30px; font-weight: 900; color: #00C853; line-height: 1;">8.5</span>
+        <span style="font-size: 9px; font-weight: 700; color: #64748B;">/ 10</span>
+      </div>
+    </div>
+
+    <!-- AI Coach One-Line Quote -->
+    <div style="background: #0A0F1E; border: 1px solid #1F2937; padding: 14px 18px; border-radius: 12px; margin-bottom: 20px; font-style: italic; font-size: 12px; color: #E2E8F0; line-height: 1.5; display: flex; align-items: flex-start; gap: 8px;">
+      <span style="color: #00C853; font-weight: 900; font-style: normal; font-size: 16px; line-height: 1;">“</span>
+      <span id="card-coach-quote">Solid court coverage and steep smashes, but backhand footwork degradation caused late point errors.</span>
+    </div>
+
+    <!-- Top 3 Weaknesses & Top 3 Improvements Grid -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+      
+      <!-- Top 3 Weaknesses (Red Pills) -->
+      <div style="background: #111827; border: 1px solid rgba(239, 68, 68, 0.3); padding: 16px; border-radius: 16px;">
+        <div style="font-size: 12px; font-weight: 800; color: #F87171; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+          <span>⚠️ Top 3 Observed Weaknesses</span>
+        </div>
+        <div id="card-weaknesses-container" style="display: flex; flex-direction: column; gap: 8px;">
+          <!-- 3 Red Pills populated by JS -->
+        </div>
+      </div>
+
+      <!-- Top 3 Improvements (Green Pills) -->
+      <div style="background: #111827; border: 1px solid rgba(0, 200, 83, 0.3); padding: 16px; border-radius: 16px;">
+        <div style="font-size: 12px; font-weight: 800; color: #00C853; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+          <span>🎯 Top 3 Improvement Focus</span>
+        </div>
+        <div id="card-improvements-container" style="display: flex; flex-direction: column; gap: 8px;">
+          <!-- 3 Green Pills populated by JS -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div style="border-top: 1px solid #1F2937; padding-top: 14px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #9CA3AF;">
+      <span style="font-weight: 700;">Analyzed by SmashSense.AI</span>
+      <span>Powered by Gemini AI Coach</span>
+    </div>
+
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="share-toast" class="fixed bottom-6 right-6 z-[300] bg-[#00C853] text-black font-extrabold px-5 py-3 rounded-xl shadow-2xl transition-all duration-300 opacity-0 transform translate-y-4 pointer-events-none text-xs flex items-center gap-2">
+    <span>Link copied to clipboard! 📋</span>
+  </div>
+
+  <!-- Vanilla JS Controller -->
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // Default fallback mock data matching exact keys if no data passed via localStorage/URL
+    let activeMatchData = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Default fallback data
       const defaultData = {
+        id: 'match_01',
+        opponentName: 'Marcus Vance',
+        date: '2026-08-02',
+        score: '18-21, 21-19, 16-21',
+        result: 'Loss',
+        is_public: true,
         player_weaknesses: [
           'Late shoulder rotation when moving backward to the deep backhand corner',
           'Over-relying on high-risk flat drives when fatigue sets in during Set 3',
-          'Insufficient margin above the net tape on sliced drop shots under pressure',
-          'Slow split-step re-centering after hitting defensive rear clears'
+          'Insufficient margin above the net tape on sliced drop shots under pressure'
         ],
         improvement_areas: [
           'Shadow footwork + scissor kick drill for fast rear corner recovery',
@@ -215,34 +386,67 @@
         ],
         opponent_strategy: 'Pin opponent to their deep forehand corner with high offensive clears, then immediately follow up with tight spinning net drops to force weak lifts.',
         overall_rating: {
-          score: 8,
+          score: 8.5,
           reasoning: 'Strong offensive firepower and net control, but backhand footwork degradation during Set 3 cost vital late points.'
         }
       };
 
-      // Retrieve data from localStorage or window object if provided
+      // Check URL query param id e.g. results.html?id=match_01
+      const urlParams = new URLSearchParams(window.location.search);
+      const matchId = urlParams.get('id');
+
       let data = defaultData;
-      try {
-        const stored = localStorage.getItem('latest_match_analysis');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (parsed && parsed.player_weaknesses) {
-            data = parsed;
+
+      if (matchId) {
+        try {
+          const res = await fetch(`/api/matches/${matchId}`);
+          if (res.ok) {
+            const fetched = await res.json();
+            if (fetched) data = fetched;
           }
+        } catch (e) {
+          console.warn('Could not fetch match from server, checking local storage:', e);
         }
-      } catch (err) {
-        console.warn('Using default analysis data:', err);
+      } else {
+        try {
+          const stored = localStorage.getItem('latest_match_analysis');
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed && (parsed.player_weaknesses || parsed.weaknesses)) {
+              data = parsed;
+            }
+          }
+        } catch (err) {
+          console.warn('Using default fallback data');
+        }
       }
 
-      // 1. Overall Rating
+      activeMatchData = data;
+      populateMainResults(data);
+      populateShareableCard(data);
+    });
+
+    function populateMainResults(data) {
+      const matchId = data.id || 'match_01';
+      const opponent = data.opponentName || 'Opponent';
+      const score = data.score || '18-21, 21-19, 16-21';
+      const result = data.result || 'Loss';
+
+      // Title & Score header
+      const headerTitle = document.getElementById('match-header-title');
+      if (headerTitle) {
+        headerTitle.innerHTML = `Match Analysis <span class="text-[#00C853]">vs ${opponent}</span> (${result} - ${score})`;
+      }
+
+      // Rating
       const scoreEl = document.getElementById('overall-score-num');
       const reasoningEl = document.getElementById('overall-reasoning');
       if (data.overall_rating) {
-        scoreEl.textContent = typeof data.overall_rating === 'object' ? data.overall_rating.score : data.overall_rating;
-        reasoningEl.textContent = typeof data.overall_rating === 'object' ? data.overall_rating.reasoning : 'Solid match performance evaluated by Gemini AI Coach.';
+        scoreEl.textContent = typeof data.overall_rating === 'object' ? (data.overall_rating.score || 8.5) : data.overall_rating;
+        reasoningEl.textContent = typeof data.overall_rating === 'object' ? (data.overall_reasoning || data.overall_rating.reasoning) : 'Evaluated by Gemini AI Coach.';
       }
 
-      // Helper function to render list items with red bullet/cards
+      // Helper for lists
       function renderList(elementId, items, isRed = true) {
         const listEl = document.getElementById(elementId);
         listEl.innerHTML = '';
@@ -267,22 +471,20 @@
         });
       }
 
-      // 2. Player Weaknesses (Red)
-      renderList('player-weaknesses-list', data.player_weaknesses, true);
+      const pWeaknesses = data.player_weaknesses || (data.weaknesses ? data.weaknesses.map(w => w.description) : []);
+      renderList('player-weaknesses-list', pWeaknesses, true);
 
-      // 3. Opponent Weaknesses (Red)
-      renderList('opponent-weaknesses-list', data.opponent_weaknesses, true);
+      const oWeaknesses = data.opponent_weaknesses || [];
+      renderList('opponent-weaknesses-list', oWeaknesses, true);
 
-      // 4. Improvement Areas (Green)
-      renderList('improvement-areas-list', data.improvement_areas, false);
+      const improvements = data.improvement_areas || (data.improvementAreas ? data.improvementAreas.map(a => a.drillName) : []);
+      renderList('improvement-areas-list', improvements, false);
 
-      // 5. Opponent Strategy (Green)
       const strategyBox = document.getElementById('opponent-strategy-box');
-      strategyBox.textContent = data.opponent_strategy || 'Target opponent deep corners and maintain tight net control.';
+      strategyBox.textContent = data.opponent_strategy || 'Pin opponent to deep forehand corner and maintain tight net pressure.';
 
-      // 6. Physical Advice & Exercises (Blue)
       const physBox = document.getElementById('physical-recommendations-box');
-      physBox.textContent = data.physical_recommendations || 'Focus on core stability and high-intensity interval training.';
+      physBox.textContent = data.physical_recommendations || 'Focus on lateral hip mobility, core rotational stability, and shuttle HIIT drills.';
 
       const exGrid = document.getElementById('exercises-grid');
       exGrid.innerHTML = '';
@@ -300,10 +502,181 @@
           exGrid.appendChild(card);
         });
       } else {
-        exGrid.innerHTML = '<p class="text-xs text-slate-500 italic col-span-4">No exercises specified.</p>';
+        exGrid.innerHTML = '<p class="text-xs text-slate-500 italic col-span-4">No conditioning drills specified.</p>';
       }
 
-    });
+      // Populate share link input
+      const linkInput = document.getElementById('share-link-input');
+      if (linkInput) {
+        linkInput.value = `${window.location.origin}/report/${matchId}`;
+      }
+
+      const publicToggle = document.getElementById('is-public-toggle');
+      if (publicToggle) {
+        publicToggle.checked = data.is_public !== false;
+      }
+    }
+
+    function populateShareableCard(data) {
+      const matchDate = data.date || new Date().toISOString().split('T')[0];
+      const opponent = data.opponentName || 'Opponent';
+      const result = data.result || 'Loss';
+      const score = data.score || '18-21, 21-19, 16-21';
+      const rating = typeof data.overall_rating === 'object' ? (data.overall_rating?.score || 8.5) : (data.overall_rating || 8.5);
+      const quote = data.aiSummary || (typeof data.overall_rating === 'object' ? data.overall_rating.reasoning : 'Solid match performance evaluated by AI Coach.');
+
+      document.getElementById('card-match-date').textContent = matchDate;
+      document.getElementById('card-match-title').innerHTML = `Alex Chen <span style="color: #00C853;">vs</span> ${opponent}`;
+      document.getElementById('card-score-text').textContent = `Score: ${score}`;
+      document.getElementById('card-rating-num').textContent = rating;
+      document.getElementById('card-coach-quote').textContent = quote;
+
+      const resultBadge = document.getElementById('card-result-badge');
+      resultBadge.textContent = result.toUpperCase();
+      if (result === 'Win') {
+        resultBadge.style.background = 'rgba(0, 200, 83, 0.2)';
+        resultBadge.style.color = '#00C853';
+        resultBadge.style.border = '1px solid rgba(0, 200, 83, 0.4)';
+      } else {
+        resultBadge.style.background = 'rgba(255, 107, 53, 0.2)';
+        resultBadge.style.color = '#FF6B35';
+        resultBadge.style.border = '1px solid rgba(255, 107, 53, 0.4)';
+      }
+
+      // Populate Top 3 Weaknesses Red Pills
+      const pWeaknesses = data.player_weaknesses || (data.weaknesses ? data.weaknesses.map(w => w.description) : []);
+      const top3Weak = pWeaknesses.slice(0, 3);
+      const weakContainer = document.getElementById('card-weaknesses-container');
+      weakContainer.innerHTML = '';
+      if (top3Weak.length > 0) {
+        top3Weak.forEach(w => {
+          const pill = document.createElement('div');
+          pill.style.cssText = 'background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); padding: 8px 12px; border-radius: 8px; font-size: 11px; color: #FCA5A5; display: flex; align-items: flex-start; gap: 6px;';
+          pill.innerHTML = `<span style="width: 6px; height: 6px; border-radius: 50%; background: #F87171; shrink: 0; margin-top: 4px;"></span><span>${w}</span>`;
+          weakContainer.appendChild(pill);
+        });
+      } else {
+        weakContainer.innerHTML = '<span style="font-size: 11px; color: #64748B;">None recorded</span>';
+      }
+
+      // Populate Top 3 Improvements Green Pills
+      const improvements = data.improvement_areas || (data.improvementAreas ? data.improvementAreas.map(a => a.drillName) : []);
+      const top3Imp = improvements.slice(0, 3);
+      const impContainer = document.getElementById('card-improvements-container');
+      impContainer.innerHTML = '';
+      if (top3Imp.length > 0) {
+        top3Imp.forEach(imp => {
+          const pill = document.createElement('div');
+          pill.style.cssText = 'background: rgba(0, 200, 83, 0.1); border: 1px solid rgba(0, 200, 83, 0.25); padding: 8px 12px; border-radius: 8px; font-size: 11px; color: #86EFAC; display: flex; align-items: flex-start; gap: 6px;';
+          pill.innerHTML = `<span style="width: 6px; height: 6px; border-radius: 50%; background: #00C853; shrink: 0; margin-top: 4px;"></span><span>${imp}</span>`;
+          impContainer.appendChild(pill);
+        });
+      } else {
+        impContainer.innerHTML = '<span style="font-size: 11px; color: #64748B;">None recorded</span>';
+      }
+    }
+
+    // Modal Control Functions
+    function openShareModal() {
+      document.getElementById('share-modal').classList.remove('hidden');
+    }
+
+    function closeShareModal() {
+      document.getElementById('share-modal').classList.add('hidden');
+    }
+
+    // Option 1: Download Image via html2canvas
+    async function downloadReportImage() {
+      const summaryCard = document.getElementById('shareable-summary-card');
+      const downloadBtn = document.getElementById('download-png-btn');
+      if (!summaryCard) return;
+
+      const originalBtnText = downloadBtn.innerHTML;
+      downloadBtn.innerHTML = '⌛ Generating PNG...';
+      downloadBtn.disabled = true;
+
+      try {
+        // Temporarily reveal card off-screen for accurate capture
+        summaryCard.style.display = 'block';
+        summaryCard.style.position = 'fixed';
+        summaryCard.style.left = '-9999px';
+        summaryCard.style.top = '0px';
+
+        const canvas = await html2canvas(summaryCard, {
+          scale: 2, // High resolution
+          useCORS: true,
+          backgroundColor: '#0A0F1E',
+          logging: false
+        });
+
+        // Hide card again
+        summaryCard.style.display = 'none';
+
+        // Auto download PNG
+        const image = canvas.toDataURL('image/png');
+        const matchId = (activeMatchData && activeMatchData.id) ? activeMatchData.id : 'match_01';
+        const link = document.createElement('a');
+        link.download = `SmashSense_Match_Report_${matchId}.png`;
+        link.href = image;
+        link.click();
+
+        showToast('Summary card downloaded as PNG! 📸');
+      } catch (err) {
+        console.error('Failed to generate image:', err);
+        alert('Failed to export report image. Please try again.');
+      } finally {
+        downloadBtn.innerHTML = originalBtnText;
+        downloadBtn.disabled = false;
+      }
+    }
+
+    // Option 2: Copy Shareable Link
+    function copyShareLink() {
+      const linkInput = document.getElementById('share-link-input');
+      if (!linkInput) return;
+
+      navigator.clipboard.writeText(linkInput.value).then(() => {
+        showToast('Link copied to clipboard! 📋');
+      }).catch(err => {
+        // Fallback for older browsers
+        linkInput.select();
+        document.execCommand('copy');
+        showToast('Link copied! 📋');
+      });
+    }
+
+    // Toggle Public Visibility
+    async function togglePublicVisibility() {
+      const toggle = document.getElementById('is-public-toggle');
+      if (!toggle || !activeMatchData) return;
+
+      const isPublic = toggle.checked;
+      activeMatchData.is_public = isPublic;
+
+      try {
+        const matchId = activeMatchData.id || 'match_01';
+        await fetch(`/api/matches/${matchId}/visibility`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ is_public: isPublic })
+        });
+        showToast(isPublic ? 'Report is now Public 🌐' : 'Report is now Private 🔒');
+      } catch (err) {
+        console.warn('Could not update visibility on server:', err);
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('share-toast');
+      if (!toast) return;
+      toast.querySelector('span').textContent = msg;
+      toast.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
+        toast.classList.remove('opacity-100', 'translate-y-0');
+      }, 3000);
+    }
   </script>
 </body>
 </html>

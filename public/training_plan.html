@@ -157,9 +157,11 @@
           headers['Authorization'] = `Bearer ${session.idToken}`;
         }
 
-        let res = await fetch('/training_plan', { headers });
+        const sportParam = session.sport ? `?sport=${encodeURIComponent(session.sport)}` : '';
+
+        let res = await fetch(`/training_plan${sportParam}`, { headers });
         if (!res.ok) {
-          res = await fetch('/api/training_plan');
+          res = await fetch(`/api/training_plan${sportParam}`, { headers });
         }
 
         if (res.ok) {

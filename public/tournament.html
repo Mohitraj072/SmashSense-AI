@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tournament Mode - SmashSense.AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brandBg: '#0A0F1E',
+            brandCard: '#111827',
+            brandBorder: '#1F2937',
+            brandAccent: '#00C853',
+            brandWarning: '#FF6B35',
+            brandInfo: '#3B82F6',
+            brandTextPrimary: '#F9FAFB',
+            brandTextSecondary: '#9CA3AF',
+            brandSuccess: '#10B981',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Pure CSS Bracket Styling & Animations */
+    @keyframes fadeInModal {
+      from { opacity: 0; transform: scale(0.96) translateY(8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-modal {
+      animation: fadeInModal 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Custom Bracket Lines & Columns */
+    .bracket-column {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      min-w: 260px;
+    }
+    .match-connector-right {
+      position: relative;
+    }
+    .match-connector-right::after {
+      content: '';
+      position: absolute;
+      right: -1.25rem;
+      top: 50%;
+      width: 1.25rem;
+      height: 2px;
+      background-color: #374151;
+    }
+    
+    /* Scrollbar customization */
+    ::-webkit-scrollbar {
+      height: 8px;
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0a0f1e;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1f2937;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #374151;
+    }
+  </style>
+</head>
+<body class="bg-[#0A0F1E] text-[#F9FAFB] font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- Shared Global Navbar Container -->
+  <div id="navbar-container"></div>
+  <script src="/navbar.js"></script>
+
+  <!-- Main Tournament View Area -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+
+    <!-- Top Header Banner -->
+    <header class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pb-6 border-b border-[#1F2937]">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 via-emerald-500 to-teal-400 text-slate-950 font-black text-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20 shrink-0">
+          🏆
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">Tournament Mode</h1>
+            <span id="tournament-status-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+              Active
+            </span>
+          </div>
+          <p id="tournament-meta-subtitle" class="text-xs text-slate-400 mt-0.5">
+            Loading tournament details...
+          </p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+        <button
+          id="btn-switch-tournament"
+          class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+        >
+          <span>🔄 Switch Tournament</span>
+        </button>
+
+        <button
+          id="btn-view-summary"
+          class="px-3.5 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-400 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+        >
+          <span>📊 View Summary</span>
+        </button>
+
+        <button
+          id="btn-open-create-modal"
+          class="px-4 py-2 rounded-xl bg-[#00C853] hover:bg-[#00C853]/90 text-[#0A0F1E] font-extrabold text-xs shadow-lg shadow-[#00C853]/20 transition-all flex items-center gap-1.5 cursor-pointer"
+        >
+          <span>➕ Create Tournament</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Active Tournament Overview Card -->
+    <div id="tournament-info-card" class="bg-gradient-to-r from-slate-900 via-slate-900/90 to-emerald-950/30 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
+        <div>
+          <span class="text-[10px] font-black uppercase tracking-wider text-emerald-400 block">CURRENT TOURNAMENT</span>
+          <h2 id="tournament-title-heading" class="text-xl sm:text-2xl font-black text-white">
+            National Badminton Masters 2026
+          </h2>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="tournament-format-badge" class="px-3 py-1 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 text-xs font-bold">
+            Single Elimination
+          </span>
+          <span id="tournament-players-count-badge" class="px-3 py-1 rounded-xl bg-slate-800 border border-slate-700 text-emerald-400 text-xs font-bold">
+            8 Players
+          </span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <div class="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-3">
+          <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Date</span>
+          <span id="tournament-date-val" class="font-bold text-white">Aug 15, 2026</span>
+        </div>
+        <div class="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-3">
+          <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Location</span>
+          <span id="tournament-location-val" class="font-bold text-white truncate block">National Sports Complex</span>
+        </div>
+        <div class="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-3">
+          <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Matches Played</span>
+          <span id="tournament-matches-progress-val" class="font-bold text-emerald-400">7 / 7 Completed</span>
+        </div>
+        <div class="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-3">
+          <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Champion</span>
+          <span id="tournament-winner-val" class="font-bold text-amber-400 truncate block">👑 Lee Zii Jia</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bracket Display Container -->
+    <div class="space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-black text-white flex items-center gap-2">
+          <span>🌿</span> Tournament Bracket
+        </h3>
+        <span class="text-xs text-slate-400 hidden sm:inline">
+          Click <span class="text-emerald-400 font-bold">Score</span> or <span class="text-cyan-400 font-bold">AI Strategy</span> on any match card
+        </span>
+      </div>
+
+      <!-- Scrollable Bracket Canvas -->
+      <div class="bg-[#111827] border border-[#1F2937] rounded-3xl p-4 sm:p-6 shadow-2xl overflow-x-auto min-h-[480px]">
+        <div id="bracket-grid" class="flex gap-6 sm:gap-10 items-stretch min-w-[700px]">
+          <!-- Bracket Columns will be rendered dynamically via JavaScript -->
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL 1: Create Tournament Modal -->
+  <div id="modal-create-tournament" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-[#111827] border border-[#1F2937] rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-6 animate-modal">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-4 border-b border-[#1F2937]">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xl font-bold">
+            🏆
+          </div>
+          <div>
+            <h2 class="text-xl font-black text-white">Create New Tournament</h2>
+            <p class="text-xs text-slate-400">Configure bracket settings & add player participants</p>
+          </div>
+        </div>
+        <button id="close-modal-create" class="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer">
+          ✕
+        </button>
+      </div>
+
+      <!-- Create Form -->
+      <form id="form-create-tournament" class="space-y-5">
+        
+        <!-- Tournament Name & Date -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Tournament Name *</label>
+            <input
+              type="text"
+              id="input-tourn-name"
+              required
+              placeholder="e.g. Selangor Open Masters 2026"
+              class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-bold focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Date *</label>
+            <input
+              type="date"
+              id="input-tourn-date"
+              required
+              class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-bold focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+        </div>
+
+        <!-- Location & Format -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Location / Venue</label>
+            <input
+              type="text"
+              id="input-tourn-location"
+              placeholder="e.g. Stadium Juara, Kuala Lumpur"
+              class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-bold focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Format *</label>
+            <select
+              id="input-tourn-format"
+              class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-bold focus:outline-none focus:border-emerald-500 cursor-pointer"
+            >
+              <option value="Single Elimination">Single Elimination (Knockout Bracket)</option>
+              <option value="Round Robin">Round Robin (Group Stage All-vs-All)</option>
+              <option value="Double Elimination">Double Elimination</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Number of Players Selector -->
+        <div>
+          <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Number of Players *</label>
+          <div class="grid grid-cols-4 gap-2" id="player-count-buttons">
+            <button type="button" data-count="4" class="count-btn px-3 py-2.5 rounded-xl text-xs font-extrabold border border-slate-800 bg-slate-950 text-slate-400 hover:text-white transition-all cursor-pointer">
+              4 Players
+            </button>
+            <button type="button" data-count="8" class="count-btn active-count px-3 py-2.5 rounded-xl text-xs font-extrabold border border-emerald-500/50 bg-emerald-500/15 text-emerald-400 shadow-md cursor-pointer">
+              8 Players
+            </button>
+            <button type="button" data-count="16" class="count-btn px-3 py-2.5 rounded-xl text-xs font-extrabold border border-slate-800 bg-slate-950 text-slate-400 hover:text-white transition-all cursor-pointer">
+              16 Players
+            </button>
+            <button type="button" data-count="32" class="count-btn px-3 py-2.5 rounded-xl text-xs font-extrabold border border-slate-800 bg-slate-950 text-slate-400 hover:text-white transition-all cursor-pointer">
+              32 Players
+            </button>
+          </div>
+        </div>
+
+        <!-- Dynamic Player Name Inputs -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider">Player Participants (Manual Input)</label>
+            <button type="button" id="btn-fill-sample-players" class="text-[11px] font-bold text-emerald-400 hover:underline cursor-pointer">
+              ⚡ Fill Sample Players
+            </button>
+          </div>
+          <div id="player-inputs-container" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-56 overflow-y-auto pr-1">
+            <!-- Dynamically populated via JS -->
+          </div>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="pt-4 border-t border-[#1F2937] flex items-center justify-end gap-3">
+          <button
+            type="button"
+            id="btn-cancel-create"
+            class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-all cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            id="btn-submit-create"
+            class="px-6 py-2.5 rounded-xl bg-[#00C853] hover:bg-[#00C853]/90 text-[#0A0F1E] font-extrabold text-xs shadow-lg shadow-[#00C853]/20 transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <span>🚀 Generate Bracket</span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+
+  <!-- MODAL 2: Enter Match Score & Link Video Analysis -->
+  <div id="modal-match-score" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-[#111827] border border-[#1F2937] rounded-3xl w-full max-w-lg p-6 shadow-2xl space-y-6 animate-modal">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-4 border-b border-[#1F2937]">
+        <div>
+          <span id="score-modal-round-name" class="text-[10px] font-black uppercase text-emerald-400 tracking-wider">Quarterfinals - Match 1</span>
+          <h2 class="text-xl font-black text-white">Enter Match Score</h2>
+        </div>
+        <button id="close-modal-score" class="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer">
+          ✕
+        </button>
+      </div>
+
+      <form id="form-match-score" class="space-y-5">
+        <input type="hidden" id="score-match-id" />
+
+        <!-- Scores Input Row -->
+        <div class="grid grid-cols-2 gap-4 bg-slate-950/80 p-4 rounded-2xl border border-slate-800">
+          <div class="space-y-2">
+            <label id="score-p1-label" class="block text-xs font-extrabold text-slate-200 truncate">Player 1</label>
+            <input
+              type="number"
+              id="score-p1-input"
+              min="0"
+              max="40"
+              required
+              placeholder="21"
+              class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white text-xl font-black text-center focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label id="score-p2-label" class="block text-xs font-extrabold text-slate-200 truncate">Player 2</label>
+            <input
+              type="number"
+              id="score-p2-input"
+              min="0"
+              max="40"
+              required
+              placeholder="19"
+              class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white text-xl font-black text-center focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+        </div>
+
+        <!-- Link Video Analysis Dropdown -->
+        <div>
+          <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">
+            📹 Link Uploaded Match Video (Optional)
+          </label>
+          <select
+            id="score-link-video-select"
+            class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-bold focus:outline-none focus:border-emerald-500 cursor-pointer"
+          >
+            <option value="">-- Select Uploaded Match Analysis --</option>
+          </select>
+          <p class="text-[11px] text-slate-400 mt-1">
+            Linking a match imports official AI performance ratings and shot weakness logs into tournament stats.
+          </p>
+        </div>
+
+        <!-- Submit -->
+        <div class="pt-4 border-t border-[#1F2937] flex items-center justify-end gap-3">
+          <button
+            type="button"
+            id="btn-cancel-score"
+            class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-6 py-2.5 rounded-xl bg-[#00C853] hover:bg-[#00C853]/90 text-[#0A0F1E] font-extrabold text-xs shadow-lg shadow-[#00C853]/20 transition-all cursor-pointer"
+          >
+            <span>✅ Save Score & Advance Winner</span>
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+
+  <!-- MODAL 3: AI Pre-Match Strategy Modal -->
+  <div id="modal-ai-strategy" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-[#111827] border border-[#1F2937] rounded-3xl w-full max-w-lg p-6 shadow-2xl space-y-5 animate-modal">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-4 border-b border-[#1F2937]">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 font-bold flex items-center justify-center text-xl">
+            🤖
+          </div>
+          <div>
+            <span class="text-[10px] font-black uppercase text-cyan-400 tracking-wider block">GEMINI AI COACH</span>
+            <h2 id="strategy-modal-title" class="text-lg font-black text-white">Pre-Match Tactical Strategy</h2>
+          </div>
+        </div>
+        <button id="close-modal-strategy" class="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer">
+          ✕
+        </button>
+      </div>
+
+      <!-- Matchup Header -->
+      <div class="bg-slate-950/80 border border-slate-800 p-4 rounded-2xl flex items-center justify-between text-center">
+        <div class="flex-1">
+          <span id="strat-p1-name" class="font-extrabold text-sm text-white block truncate">Lee Zii Jia</span>
+          <span class="text-[10px] text-emerald-400 font-bold">Player 1</span>
+        </div>
+        <span class="px-3 py-1 rounded-xl bg-slate-800 text-slate-400 font-black text-xs">VS</span>
+        <div class="flex-1">
+          <span id="strat-p2-name" class="font-extrabold text-sm text-white block truncate">Viktor Axelsen</span>
+          <span class="text-[10px] text-amber-400 font-bold">Player 2</span>
+        </div>
+      </div>
+
+      <!-- Strategy Content Box -->
+      <div class="bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/30 border border-cyan-500/30 p-4 rounded-2xl space-y-3">
+        <span class="text-xs font-black text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
+          🎯 Opponent Scouting & Tactical Directive
+        </span>
+        <p id="strat-content-text" class="text-xs text-slate-200 leading-relaxed font-medium">
+          Loading AI tactical recommendations...
+        </p>
+      </div>
+
+      <div class="flex justify-end">
+        <button
+          id="btn-close-strategy"
+          class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs cursor-pointer"
+        >
+          Got it
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- MODAL 4: Tournament Summary Page/Modal -->
+  <div id="modal-tournament-summary" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-[#111827] border border-[#1F2937] rounded-3xl w-full max-w-3xl max-h-[92vh] overflow-y-auto p-6 sm:p-8 shadow-2xl space-y-6 animate-modal">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-4 border-b border-[#1F2937]">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 via-emerald-500 to-teal-400 text-slate-950 font-black text-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+            🥇
+          </div>
+          <div>
+            <span class="text-[10px] font-black uppercase text-emerald-400 tracking-wider block">TOURNAMENT COMPLETED</span>
+            <h2 id="sum-tourn-name" class="text-xl sm:text-2xl font-black text-white">National Badminton Masters 2026</h2>
+          </div>
+        </div>
+        <button id="close-modal-summary" class="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer">
+          ✕
+        </button>
+      </div>
+
+      <!-- Champion Banner -->
+      <div class="bg-gradient-to-r from-amber-500/20 via-emerald-500/15 to-teal-500/20 border border-amber-500/40 rounded-2xl p-5 text-center space-y-1">
+        <span class="text-[10px] font-black uppercase tracking-widest text-amber-400 block">TOURNAMENT CHAMPION</span>
+        <h3 id="sum-winner-name" class="text-2xl sm:text-3xl font-black text-white">👑 Lee Zii Jia</h3>
+        <p class="text-xs text-slate-300">Undefeated Championship Victory</p>
+      </div>
+
+      <!-- 4 Key Tournament Metrics -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        <!-- Best Performance Match -->
+        <div class="bg-slate-950/80 border border-slate-800 p-4 rounded-2xl space-y-2">
+          <span class="text-[10px] font-black uppercase tracking-wider text-emerald-400 block">⚡ BEST PERFORMANCE MATCH</span>
+          <div class="flex items-center justify-between">
+            <span id="sum-best-match-players" class="text-sm font-extrabold text-white">Lee Zii Jia vs Kunlavut Vitidsarn</span>
+            <span id="sum-best-match-rating" class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-black text-xs">
+              9.0 AI Rating
+            </span>
+          </div>
+          <p id="sum-best-match-score" class="text-xs text-slate-400">Score: 21-19, 21-18</p>
+        </div>
+
+        <!-- Most Common Weakness -->
+        <div class="bg-slate-950/80 border border-slate-800 p-4 rounded-2xl space-y-2">
+          <span class="text-[10px] font-black uppercase tracking-wider text-rose-400 block">⚠️ COMMON TOURNAMENT WEAKNESS</span>
+          <p id="sum-common-weakness-text" class="text-xs font-bold text-slate-200">
+            Rear Court Scissor Kick Recovery & Late Backhand Clearance Height
+          </p>
+          <span class="text-[10px] text-slate-400 block">Identified across tournament match video analytics</span>
+        </div>
+
+      </div>
+
+      <!-- Final Standings Table -->
+      <div class="space-y-3">
+        <h4 class="text-xs font-black uppercase tracking-wider text-slate-300">Final Tournament Standings</h4>
+        <div class="bg-slate-950/80 border border-slate-800 rounded-2xl overflow-hidden">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-900 border-b border-slate-800 text-slate-400 font-extrabold text-[10px] uppercase tracking-wider">
+              <tr>
+                <th class="p-3">Rank</th>
+                <th class="p-3">Player Participant</th>
+                <th class="p-3 text-center">Wins</th>
+                <th class="p-3 text-center">Losses</th>
+              </tr>
+            </thead>
+            <tbody id="sum-standings-tbody" class="divide-y divide-slate-800/60 font-semibold text-slate-200">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- AI Head Coach Recommendation -->
+      <div class="bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950/40 border border-emerald-500/30 p-5 rounded-2xl space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-black text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+            🤖 AI Coach Directive for Next Tournament
+          </span>
+          <span class="text-xs text-emerald-400">✨</span>
+        </div>
+        <p id="sum-ai-recommendation-text" class="text-xs text-slate-200 leading-relaxed font-medium italic">
+          "Dominant championship performance! Focus on sharpening rear court recovery speed and high defensive lift clearance before your next upcoming tournament."
+        </p>
+      </div>
+
+      <!-- Close -->
+      <div class="flex justify-end pt-2">
+        <button
+          id="btn-close-summary-footer"
+          class="px-6 py-2.5 rounded-xl bg-[#00C853] hover:bg-[#00C853]/90 text-[#0A0F1E] font-extrabold text-xs cursor-pointer shadow-lg shadow-emerald-500/20"
+        >
+          Done
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- MODAL 5: Switch Active Tournament Modal -->
+  <div id="modal-switch-tournament" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-[#111827] border border-[#1F2937] rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-4 animate-modal">
+      <div class="flex items-center justify-between pb-3 border-b border-[#1F2937]">
+        <h2 class="text-lg font-black text-white">Select Tournament</h2>
+        <button id="close-modal-switch" class="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer">
+          ✕
+        </button>
+      </div>
+
+      <div id="tournaments-list-container" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+        <!-- List populated via JS -->
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Tournament Controller Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      let currentTournament = null;
+      let allTournaments = [];
+      let sampleMatchesList = [];
+
+      const SAMPLE_PLAYER_NAMES = [
+        'Lee Zii Jia', 'Viktor Axelsen', 'Shi Yuqi', 'Anders Antonsen',
+        'Kunlavut Vitidsarn', 'Loh Kean Yew', 'Chou Tien Chen', 'Naraoka Kodai',
+        'Jonathan Christie', 'Prannoy H. S.', 'Kenta Nishimoto', 'Lu Guang Zu',
+        'Ng Ka Long', 'Lakshya Sen', 'Weng Hong Yang', 'Koki Watanabe',
+        'Lee Cheuk Yiu', 'Wang Tzu Wei', 'Toma Junior Popov', 'Christo Popov',
+        'Lin Dan', 'Lee Chong Wei', 'Taufik Hidayat', 'Peter Gade',
+        'Chen Long', 'Boonsak Ponsana', 'Bao Chunlai', 'Sony Dwi Kuncoro',
+        'Kenichi Tago', 'Jan O Jorgensen', 'Hu Yun', 'Nguyen Tien Minh'
+      ];
+
+      // 1. Fetch Active Tournaments
+      async function loadTournaments(selectedId = null) {
+        try {
+          const res = await fetch('/tournament/list');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.tournaments && data.tournaments.length > 0) {
+              allTournaments = data.tournaments;
+              currentTournament = selectedId 
+                ? allTournaments.find(t => t.tournament_id === selectedId) || allTournaments[0]
+                : allTournaments[0];
+            }
+          }
+        } catch(err) {
+          console.warn('Error fetching tournaments list:', err);
+        }
+
+        renderTournamentOverview();
+        renderBracket();
+      }
+
+      // Fetch uploaded matches for video linking dropdown
+      async function loadUploadedMatches() {
+        try {
+          const res = await fetch('/api/matches');
+          if (res.ok) {
+            sampleMatchesList = await res.json();
+          }
+        } catch(err) {
+          console.warn('Matches fallback:', err);
+        }
+      }
+
+      // 2. Render Tournament Overview Card
+      function renderTournamentOverview() {
+        if (!currentTournament) return;
+
+        document.getElementById('tournament-title-heading').textContent = currentTournament.name;
+        document.getElementById('tournament-meta-subtitle').textContent = `${currentTournament.format} • ${currentTournament.num_players} Players • ${currentTournament.location}`;
+        document.getElementById('tournament-format-badge').textContent = currentTournament.format;
+        document.getElementById('tournament-players-count-badge').textContent = `${currentTournament.num_players} Players`;
+        document.getElementById('tournament-date-val').textContent = currentTournament.date;
+        document.getElementById('tournament-location-val').textContent = currentTournament.location;
+
+        const completedMatches = currentTournament.matches.filter(m => m.status === 'completed').length;
+        const totalMatches = currentTournament.matches.length;
+        document.getElementById('tournament-matches-progress-val').textContent = `${completedMatches} / ${totalMatches} Completed`;
+
+        const statusBadge = document.getElementById('tournament-status-badge');
+        if (currentTournament.status === 'completed' || currentTournament.winner) {
+          statusBadge.textContent = 'Completed 🏆';
+          statusBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 border border-amber-500/40 text-amber-300';
+          document.getElementById('tournament-winner-val').textContent = `👑 ${currentTournament.winner || 'Champion'}`;
+        } else {
+          statusBadge.textContent = 'Ongoing ⚡';
+          statusBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400';
+          document.getElementById('tournament-winner-val').textContent = 'In Progress...';
+        }
+      }
+
+      // 3. Render Bracket using pure HTML and CSS Divs
+      function renderBracket() {
+        const grid = document.getElementById('bracket-grid');
+        grid.innerHTML = '';
+
+        if (!currentTournament || !currentTournament.matches) {
+          grid.innerHTML = '<div class="text-slate-400 text-xs">No bracket generated.</div>';
+          return;
+        }
+
+        // Group matches by round
+        const roundsMap = {};
+        currentTournament.matches.forEach(m => {
+          const r = m.round || 1;
+          if (!roundsMap[r]) roundsMap[r] = [];
+          roundsMap[r].push(m);
+        });
+
+        const roundNumbers = Object.keys(roundsMap).map(Number).sort((a, b) => a - b);
+
+        roundNumbers.forEach((rNum, colIndex) => {
+          const roundMatches = roundsMap[rNum];
+          const roundName = roundMatches[0]?.round_name || `Round ${rNum}`;
+
+          const colDiv = document.createElement('div');
+          colDiv.className = 'bracket-column flex-1 min-w-[240px] space-y-4';
+
+          // Round Header
+          const header = document.createElement('div');
+          header.className = 'bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-center shadow-md mb-2';
+          header.innerHTML = `
+            <span class="text-[10px] font-black uppercase text-emerald-400 tracking-wider block">Round ${rNum}</span>
+            <h4 class="text-xs font-extrabold text-white">${roundName}</h4>
+          `;
+          colDiv.appendChild(header);
+
+          // Render Match Cards for this round
+          const matchesWrapper = document.createElement('div');
+          matchesWrapper.className = 'flex flex-col justify-around h-full space-y-6';
+
+          roundMatches.forEach(m => {
+            const card = document.createElement('div');
+            card.className = 'bg-slate-950/90 border border-slate-800 rounded-2xl p-3 shadow-lg hover:border-slate-700 transition-all space-y-2.5 relative';
+
+            const isP1Win = m.winner && m.winner === m.player1;
+            const isP2Win = m.winner && m.winner === m.player2;
+
+            card.innerHTML = `
+              <div class="flex items-center justify-between text-[10px] font-bold pb-1 border-b border-slate-800/80 text-slate-400">
+                <span>Match #${m.match_number || m.match_id}</span>
+                <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold ${m.status === 'completed' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'}">
+                  ${m.status === 'completed' ? 'COMPLETED' : 'PENDING'}
+                </span>
+              </div>
+
+              <!-- Player 1 Slot -->
+              <div class="flex items-center justify-between p-2 rounded-xl border ${isP1Win ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 font-extrabold' : 'bg-slate-900/80 border-slate-800 text-slate-200'}">
+                <div class="flex items-center gap-2 truncate">
+                  <span class="w-5 h-5 rounded-full bg-slate-800 text-[9px] font-extrabold flex items-center justify-center shrink-0">1</span>
+                  <span class="text-xs truncate">${m.player1 || 'TBD'}</span>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <span class="text-xs font-black">${m.score1 !== undefined ? m.score1 : ''}</span>
+                  ${isP1Win ? '<span class="text-emerald-400 font-bold text-xs">✓</span>' : ''}
+                </div>
+              </div>
+
+              <!-- Player 2 Slot -->
+              <div class="flex items-center justify-between p-2 rounded-xl border ${isP2Win ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 font-extrabold' : 'bg-slate-900/80 border-slate-800 text-slate-200'}">
+                <div class="flex items-center gap-2 truncate">
+                  <span class="w-5 h-5 rounded-full bg-slate-800 text-[9px] font-extrabold flex items-center justify-center shrink-0">2</span>
+                  <span class="text-xs truncate">${m.player2 || 'TBD'}</span>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <span class="text-xs font-black">${m.score2 !== undefined ? m.score2 : ''}</span>
+                  ${isP2Win ? '<span class="text-emerald-400 font-bold text-xs">✓</span>' : ''}
+                </div>
+              </div>
+
+              <!-- Match Controls / Actions -->
+              <div class="flex items-center justify-between pt-1 gap-1">
+                <button
+                  data-action="score"
+                  data-match-id="${m.match_id}"
+                  class="flex-1 py-1 px-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold transition-all cursor-pointer text-center"
+                >
+                  ✏️ Enter Score
+                </button>
+                <button
+                  data-action="strategy"
+                  data-match-id="${m.match_id}"
+                  class="flex-1 py-1 px-2 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold transition-all cursor-pointer text-center"
+                >
+                  🧠 AI Strategy
+                </button>
+              </div>
+            `;
+
+            matchesWrapper.appendChild(card);
+          });
+
+          colDiv.appendChild(matchesWrapper);
+          grid.appendChild(colDiv);
+        });
+
+        // Add event listeners to match action buttons
+        grid.querySelectorAll('button[data-action="score"]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const mId = e.currentTarget.getAttribute('data-match-id');
+            openScoreModal(mId);
+          });
+        });
+
+        grid.querySelectorAll('button[data-action="strategy"]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const mId = e.currentTarget.getAttribute('data-match-id');
+            openStrategyModal(mId);
+          });
+        });
+      }
+
+      // 4. Modal Handlers
+      
+      // Create Modal
+      const modalCreate = document.getElementById('modal-create-tournament');
+      document.getElementById('btn-open-create-modal').addEventListener('click', () => {
+        modalCreate.classList.remove('hidden');
+        renderPlayerInputs(8);
+      });
+      document.getElementById('close-modal-create').addEventListener('click', () => modalCreate.classList.add('hidden'));
+      document.getElementById('btn-cancel-create').addEventListener('click', () => modalCreate.classList.add('hidden'));
+
+      // Player count selector buttons
+      let selectedPlayerCount = 8;
+      const countBtns = document.querySelectorAll('.count-btn');
+      countBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          countBtns.forEach(b => {
+            b.classList.remove('active-count', 'border-emerald-500/50', 'bg-emerald-500/15', 'text-emerald-400');
+            b.classList.add('border-slate-800', 'bg-slate-950', 'text-slate-400');
+          });
+          btn.classList.add('active-count', 'border-emerald-500/50', 'bg-emerald-500/15', 'text-emerald-400');
+          btn.classList.remove('border-slate-800', 'bg-slate-950', 'text-slate-400');
+
+          selectedPlayerCount = parseInt(btn.getAttribute('data-count'), 10);
+          renderPlayerInputs(selectedPlayerCount);
+        });
+      });
+
+      function renderPlayerInputs(count) {
+        const container = document.getElementById('player-inputs-container');
+        container.innerHTML = '';
+
+        for (let i = 0; i < count; i++) {
+          const nameVal = SAMPLE_PLAYER_NAMES[i] || `Player ${i + 1}`;
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.required = true;
+          input.value = nameVal;
+          input.placeholder = `Player ${i + 1} Name`;
+          input.className = 'player-name-input px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-bold focus:outline-none focus:border-emerald-500';
+          container.appendChild(input);
+        }
+      }
+
+      document.getElementById('btn-fill-sample-players').addEventListener('click', () => {
+        renderPlayerInputs(selectedPlayerCount);
+      });
+
+      // Handle Create Tournament Form Submit
+      document.getElementById('form-create-tournament').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const name = document.getElementById('input-tourn-name').value.trim();
+        const date = document.getElementById('input-tourn-date').value;
+        const location = document.getElementById('input-tourn-location').value.trim();
+        const format = document.getElementById('input-tourn-format').value;
+
+        const nameInputs = document.querySelectorAll('.player-name-input');
+        const players = Array.from(nameInputs).map((inp, idx) => inp.value.trim() || `Player ${idx + 1}`);
+
+        try {
+          const res = await fetch('/tournament/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name,
+              date,
+              location,
+              format,
+              num_players: selectedPlayerCount,
+              players
+            })
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            modalCreate.classList.add('hidden');
+            await loadTournaments(data.tournament_id);
+          }
+        } catch(err) {
+          console.error('Error creating tournament:', err);
+        }
+      });
+
+      // Score Modal
+      const modalScore = document.getElementById('modal-match-score');
+      document.getElementById('close-modal-score').addEventListener('click', () => modalScore.classList.add('hidden'));
+      document.getElementById('btn-cancel-score').addEventListener('click', () => modalScore.classList.add('hidden'));
+
+      function openScoreModal(matchId) {
+        if (!currentTournament) return;
+        const match = currentTournament.matches.find(m => m.match_id === matchId);
+        if (!match) return;
+
+        document.getElementById('score-match-id').value = matchId;
+        document.getElementById('score-modal-round-name').textContent = `${match.round_name} - Match #${match.match_number || matchId}`;
+        document.getElementById('score-p1-label').textContent = match.player1 || 'Player 1';
+        document.getElementById('score-p2-label').textContent = match.player2 || 'Player 2';
+        document.getElementById('score-p1-input').value = match.score1 || '21';
+        document.getElementById('score-p2-input').value = match.score2 || '18';
+
+        // Populate Video select
+        const videoSelect = document.getElementById('score-link-video-select');
+        videoSelect.innerHTML = '<option value="">-- Select Uploaded Match Analysis --</option>';
+        sampleMatchesList.forEach(m => {
+          const rating = m.ai_analysis?.overall_rating?.score || m.overall_rating?.score || '8.5';
+          const name = m.opponentName || m.opponent_name || 'Match';
+          const opt = document.createElement('option');
+          opt.value = m.id;
+          opt.textContent = `📹 ${m.title || name} (Rating: ${rating})`;
+          if (match.linked_match_id === m.id) opt.selected = true;
+          videoSelect.appendChild(opt);
+        });
+
+        modalScore.classList.remove('hidden');
+      }
+
+      // Submit Score Form
+      document.getElementById('form-match-score').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const matchId = document.getElementById('score-match-id').value;
+        const score1 = document.getElementById('score-p1-input').value;
+        const score2 = document.getElementById('score-p2-input').value;
+        const linkedVideoId = document.getElementById('score-link-video-select').value;
+
+        if (!currentTournament) return;
+
+        try {
+          const res = await fetch(`/tournament/${currentTournament.tournament_id}/result`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              match_id: matchId,
+              score1,
+              score2,
+              linked_match_id: linkedVideoId
+            })
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            modalScore.classList.add('hidden');
+            currentTournament = data.tournament;
+            renderTournamentOverview();
+            renderBracket();
+
+            if (currentTournament.status === 'completed') {
+              openSummaryModal();
+            }
+          }
+        } catch(err) {
+          console.error('Error submitting match score:', err);
+        }
+      });
+
+      // Strategy Modal
+      const modalStrategy = document.getElementById('modal-ai-strategy');
+      document.getElementById('close-modal-strategy').addEventListener('click', () => modalStrategy.classList.add('hidden'));
+      document.getElementById('btn-close-strategy').addEventListener('click', () => modalStrategy.classList.add('hidden'));
+
+      function openStrategyModal(matchId) {
+        if (!currentTournament) return;
+        const match = currentTournament.matches.find(m => m.match_id === matchId);
+        if (!match) return;
+
+        document.getElementById('strat-p1-name').textContent = match.player1 || 'Player 1';
+        document.getElementById('strat-p2-name').textContent = match.player2 || 'Player 2';
+        document.getElementById('strat-content-text').textContent = match.ai_strategy || `Tactical Strategy: Target ${match.player2}'s backhand corner transition. Maintain aggressive low drives to suppress high returns.`;
+
+        modalStrategy.classList.remove('hidden');
+      }
+
+      // Summary Modal
+      const modalSummary = document.getElementById('modal-tournament-summary');
+      document.getElementById('btn-view-summary').addEventListener('click', () => openSummaryModal());
+      document.getElementById('close-modal-summary').addEventListener('click', () => modalSummary.classList.add('hidden'));
+      document.getElementById('btn-close-summary-footer').addEventListener('click', () => modalSummary.classList.add('hidden'));
+
+      async function openSummaryModal() {
+        if (!currentTournament) return;
+
+        try {
+          const res = await fetch(`/tournament/${currentTournament.tournament_id}/summary`);
+          if (res.ok) {
+            const data = await res.json();
+            const sum = data.summary;
+
+            document.getElementById('sum-tourn-name').textContent = currentTournament.name;
+            document.getElementById('sum-winner-name').textContent = `👑 ${currentTournament.winner || 'Champion'}`;
+
+            if (sum.best_performance_match) {
+              document.getElementById('sum-best-match-players').textContent = `${sum.best_performance_match.player1} vs ${sum.best_performance_match.player2}`;
+              document.getElementById('sum-best-match-rating').textContent = `${sum.best_performance_match.ai_rating} AI Rating`;
+              document.getElementById('sum-best-match-score').textContent = `Score: ${sum.best_performance_match.score}`;
+            }
+
+            document.getElementById('sum-common-weakness-text').textContent = sum.most_common_weakness || 'Rear Court Scissor Kick Transition';
+            document.getElementById('sum-ai-recommendation-text').textContent = `"${sum.ai_recommendation}"`;
+
+            // Populate Standings Table
+            const tbody = document.getElementById('sum-standings-tbody');
+            tbody.innerHTML = '';
+            if (sum.final_standings) {
+              sum.final_standings.forEach(s => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-900/60 transition-colors';
+                const medal = s.rank === 1 ? '🥇' : s.rank === 2 ? '🥈' : s.rank === 3 ? '🥉' : `#${s.rank}`;
+                tr.innerHTML = `
+                  <td class="p-3 font-extrabold text-white">${medal}</td>
+                  <td class="p-3 font-bold text-white">${s.player}</td>
+                  <td class="p-3 text-center text-emerald-400 font-extrabold">${s.wins}</td>
+                  <td class="p-3 text-center text-rose-400 font-extrabold">${s.losses}</td>
+                `;
+                tbody.appendChild(tr);
+              });
+            }
+
+            modalSummary.classList.remove('hidden');
+          }
+        } catch(err) {
+          console.error('Error opening summary modal:', err);
+        }
+      }
+
+      // Switch Tournament Modal
+      const modalSwitch = document.getElementById('modal-switch-tournament');
+      document.getElementById('btn-switch-tournament').addEventListener('click', () => {
+        const container = document.getElementById('tournaments-list-container');
+        container.innerHTML = '';
+
+        allTournaments.forEach(t => {
+          const item = document.createElement('div');
+          item.className = `p-3 rounded-2xl border cursor-pointer transition-all flex items-center justify-between ${t.tournament_id === currentTournament?.tournament_id ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400' : 'bg-slate-900 border-slate-800 text-slate-200 hover:border-slate-700'}`;
+          item.innerHTML = `
+            <div>
+              <span class="font-extrabold text-xs block">${t.name}</span>
+              <span class="text-[10px] text-slate-400">${t.format} • ${t.num_players} Players • ${t.date}</span>
+            </div>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${t.status === 'completed' ? 'bg-amber-500/20 text-amber-300' : 'bg-emerald-500/15 text-emerald-400'}">
+              ${t.status === 'completed' ? 'Completed' : 'Ongoing'}
+            </span>
+          `;
+          item.addEventListener('click', () => {
+            currentTournament = t;
+            renderTournamentOverview();
+            renderBracket();
+            modalSwitch.classList.add('hidden');
+          });
+          container.appendChild(item);
+        });
+
+        modalSwitch.classList.remove('hidden');
+      });
+
+      document.getElementById('close-modal-switch').addEventListener('click', () => modalSwitch.classList.add('hidden'));
+
+      // Initial Load
+      loadUploadedMatches();
+      loadTournaments();
+    });
+  </script>
+</body>
+</html>

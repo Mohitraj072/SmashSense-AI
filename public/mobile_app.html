@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>React Native Expo Mobile App — SmashSense.AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              green: '#00C853',
+              dark: '#0A0F1E',
+              card: '#111827',
+              border: '#1F2937'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col">
+  
+  <!-- Navbar Placeholder -->
+  <div id="navbar-placeholder"></div>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8 items-start">
+    
+    <!-- Left Column: Interactive Phone Container (Simulating Expo App) -->
+    <div class="w-full lg:w-[420px] shrink-0 mx-auto">
+      
+      <!-- Phone Bezel Container -->
+      <div class="relative w-full max-w-[390px] mx-auto h-[800px] bg-[#0A0F1E] rounded-[48px] border-[10px] border-slate-800 shadow-2xl flex flex-col overflow-hidden ring-1 ring-slate-700/50">
+        
+        <!-- iPhone Notch / Dynamic Island & Status Bar -->
+        <div class="w-full bg-[#0A0F1E] pt-3 px-6 pb-2 flex items-center justify-between text-[11px] font-bold text-slate-400 select-none border-b border-slate-900 z-30">
+          <span>9:41</span>
+          <!-- Dynamic Island / Speaker Pill -->
+          <div class="w-24 h-4 bg-slate-900 rounded-full border border-slate-800 flex items-center justify-center">
+            <div class="w-2 h-2 rounded-full bg-slate-800"></div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span>📶</span>
+            <span>📶</span>
+            <span>🔋</span>
+          </div>
+        </div>
+
+        <!-- Push Notification Banner Toast (Expo Notifications) -->
+        <div id="expo-push-banner" class="hidden absolute top-12 left-3 right-3 z-50 bg-[#111827]/95 backdrop-blur-md border border-[#00C853] p-3 rounded-2xl shadow-2xl flex items-start gap-3 transition-all transform duration-300">
+          <div class="w-8 h-8 rounded-xl bg-[#00C853]/20 border border-[#00C853]/40 flex items-center justify-center text-[#00C853] font-bold text-sm shrink-0">
+            ⚡
+          </div>
+          <div class="flex-1 text-left">
+            <span class="text-[10px] font-extrabold text-[#00C853] uppercase tracking-wider block">SmashSense.AI Expo Alert</span>
+            <span id="push-title" class="text-xs font-bold text-white block">Match Analysis Ready! 🎉</span>
+            <span id="push-body" class="text-[11px] text-slate-300 block mt-0.5">Gemini 2.5 Flash has completed processing your video.</span>
+          </div>
+          <button onclick="hidePushNotification()" class="text-slate-400 hover:text-white text-xs font-bold">✕</button>
+        </div>
+
+        <!-- Screen Content Container -->
+        <div id="phone-screen-container" class="flex-1 overflow-y-auto relative bg-[#0A0F1E] text-white p-4">
+          <!-- Active screen renders dynamically via JS -->
+        </div>
+
+        <!-- React Navigation Bottom Tab Bar -->
+        <div id="phone-tab-bar" class="bg-[#0A0F1E] border-t border-[#1F2937] py-2 px-3 flex items-center justify-around z-20">
+          <button onclick="switchScreen('dashboard')" id="tab-dashboard" class="mobile-tab-item flex flex-col items-center gap-1 text-[#00C853]">
+            <span class="text-base">⚡</span>
+            <span class="text-[10px] font-bold">Dashboard</span>
+          </button>
+          <button onclick="switchScreen('upload')" id="tab-upload" class="mobile-tab-item flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300">
+            <span class="text-base">📹</span>
+            <span class="text-[10px] font-bold">Upload</span>
+          </button>
+          <button onclick="switchScreen('history')" id="tab-history" class="mobile-tab-item flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300">
+            <span class="text-base">📜</span>
+            <span class="text-[10px] font-bold">History</span>
+          </button>
+          <button onclick="switchScreen('profile')" id="tab-profile" class="mobile-tab-item flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300">
+            <span class="text-base">👤</span>
+            <span class="text-[10px] font-bold">Profile</span>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Right Column: Interactive App Controls & Source Code Viewer -->
+    <div class="flex-1 space-y-6 w-full">
+      
+      <!-- Header Banner -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-black text-xs">EXPO SDK 51</span>
+              <span class="px-2.5 py-1 rounded-lg bg-blue-500/15 text-blue-400 border border-blue-500/30 font-black text-xs">REACT NATIVE 0.74</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-black text-white mt-2">SmashSense Mobile (React Native)</h1>
+            <p class="text-xs text-slate-400 mt-1">
+              Complete cross-platform mobile client connected to existing Flask & Gemini 2.5 Flash backend.
+            </p>
+          </div>
+
+          <!-- Quick Test Actions -->
+          <div class="flex items-center gap-2">
+            <button onclick="testPushNotification()" class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-1.5 cursor-pointer">
+              <span>🔔 Test Push Alert</span>
+            </button>
+            <button onclick="toggleOfflineMode()" id="offline-toggle-btn" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer">
+              <span>📶 Offline Mode: OFF</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 6 Screen Switcher Pills -->
+        <div class="pt-4 border-t border-slate-800/80">
+          <span class="text-[11px] font-extrabold uppercase text-slate-400 tracking-wider block mb-2">Switch Screen View:</span>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="switchScreen('login')" id="btn-screen-login" class="screen-btn px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 border border-slate-700">1. Login (Firebase)</button>
+            <button onclick="switchScreen('dashboard')" id="btn-screen-dashboard" class="screen-btn px-3 py-1.5 rounded-xl bg-emerald-500 text-slate-950 text-xs font-black border border-emerald-400">2. Dashboard</button>
+            <button onclick="switchScreen('upload')" id="btn-screen-upload" class="screen-btn px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 border border-slate-700">3. Upload Video</button>
+            <button onclick="switchScreen('results')" id="btn-screen-results" class="screen-btn px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 border border-slate-700">4. Match Results</button>
+            <button onclick="switchScreen('history')" id="btn-screen-history" class="screen-btn px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 border border-slate-700">5. History (FlatList)</button>
+            <button onclick="switchScreen('profile')" id="btn-screen-profile" class="screen-btn px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 border border-slate-700">6. Profile</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature Highlights Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-1">
+          <div class="flex items-center gap-2 text-emerald-400 font-extrabold text-xs">
+            <span>📹 expo-av Video Picker</span>
+          </div>
+          <p class="text-xs text-slate-400">Gallery picker & playback preview integration for match footage.</p>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-1">
+          <div class="flex items-center gap-2 text-blue-400 font-extrabold text-xs">
+            <span>🔥 Firebase Auth SDK v9</span>
+          </div>
+          <p class="text-xs text-slate-400">Email/Password user authentication & token management.</p>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-1">
+          <div class="flex items-center gap-2 text-amber-400 font-extrabold text-xs">
+            <span>⚡ AsyncStorage Cache</span>
+          </div>
+          <p class="text-xs text-slate-400">Offline mode caching last 5 match reports automatically.</p>
+        </div>
+
+      </div>
+
+      <!-- React Native Source Files Inspector -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-extrabold text-white uppercase tracking-wider">📁 React Native Source Architecture</h2>
+          <span class="text-xs text-slate-400 font-mono">/mobile directory</span>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-mono">
+          <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-emerald-400">App.js (Navigation)</div>
+          <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-300">services/firebase.js</div>
+          <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-300">services/api.js</div>
+          <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-300">services/notifications.js</div>
+          <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-300">screens/LoginScreen.js</div>
+          <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-300">screens/DashboardScreen.js</div>
+          <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-300">screens/UploadScreen.js</div>
+          <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-300">screens/ResultsScreen.js</div>
+          <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-300">screens/HistoryScreen.js</div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    // Navbar component loader
+    fetch('/navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('navbar-placeholder').innerHTML = html;
+        const navItem = document.querySelector('[data-nav="mobile_app"]');
+        if (navItem) navItem.classList.add('text-emerald-400', 'bg-slate-800');
+      });
+
+    let currentScreen = 'dashboard';
+    let isOffline = false;
+
+    // Screens HTML Templates
+    function renderScreen(screen) {
+      currentScreen = screen;
+      const container = document.getElementById('phone-screen-container');
+      const tabBar = document.getElementById('phone-tab-bar');
+
+      // Highlight active screen button
+      document.querySelectorAll('.screen-btn').forEach(btn => {
+        btn.classList.remove('bg-emerald-500', 'text-slate-950', 'font-black', 'border-emerald-400');
+        btn.classList.add('bg-slate-800', 'text-slate-300', 'border-slate-700');
+      });
+      const activeBtn = document.getElementById(`btn-screen-${screen}`);
+      if (activeBtn) {
+        activeBtn.classList.remove('bg-slate-800', 'text-slate-300', 'border-slate-700');
+        activeBtn.classList.add('bg-emerald-500', 'text-slate-950', 'font-black', 'border-emerald-400');
+      }
+
+      // Highlight tab bar icons
+      document.querySelectorAll('.mobile-tab-item').forEach(tab => {
+        tab.classList.remove('text-[#00C853]');
+        tab.classList.add('text-slate-500');
+      });
+      const activeTab = document.getElementById(`tab-${screen}`);
+      if (activeTab) {
+        activeTab.classList.remove('text-slate-500');
+        activeTab.classList.add('text-[#00C853]');
+      }
+
+      // Hide tab bar on Login screen
+      if (screen === 'login') {
+        tabBar.classList.add('hidden');
+      } else {
+        tabBar.classList.remove('hidden');
+      }
+
+      // Render Screen Content
+      if (screen === 'login') {
+        container.innerHTML = `
+          <div class="h-full flex flex-col justify-center px-4 space-y-6">
+            <div class="text-center space-y-2">
+              <div class="w-14 h-14 rounded-2xl bg-[#00C853]/20 border border-[#00C853]/40 flex items-center justify-center text-2xl mx-auto">⚡</div>
+              <h1 class="text-2xl font-black text-white">SmashSense<span class="text-[#00C853]">.AI</span></h1>
+              <p class="text-xs text-slate-400">Firebase Auth Mobile Login</p>
+            </div>
+
+            <div class="bg-[#111827] border border-[#1F2937] p-5 rounded-2xl space-y-4">
+              <div>
+                <label class="text-[10px] font-extrabold text-slate-400 block mb-1">EMAIL ADDRESS</label>
+                <input type="email" value="player@smashsense.ai" class="w-full bg-[#0A0F1E] border border-[#1F2937] px-3 py-2 rounded-xl text-xs text-white">
+              </div>
+              <div>
+                <label class="text-[10px] font-extrabold text-slate-400 block mb-1">PASSWORD</label>
+                <input type="password" value="••••••••" class="w-full bg-[#0A0F1E] border border-[#1F2937] px-3 py-2 rounded-xl text-xs text-white">
+              </div>
+              <button onclick="switchScreen('dashboard')" class="w-full py-3 bg-[#00C853] text-[#0A0F1E] font-black text-xs rounded-xl uppercase">
+                Sign In to Mobile App
+              </button>
+            </div>
+
+            <button onclick="switchScreen('dashboard')" class="text-center text-xs text-slate-400 hover:text-white">
+              Continue as Demo Guest →
+            </button>
+          </div>
+        `;
+      } else if (screen === 'dashboard') {
+        container.innerHTML = `
+          <div class="space-y-4 pb-6">
+            <div class="flex items-center justify-between pt-2">
+              <div>
+                <h1 class="text-lg font-black text-white">Player Dashboard</h1>
+                <p class="text-[11px] text-slate-400">Gemini AI Performance Stats</p>
+              </div>
+              <button onclick="switchScreen('upload')" class="px-3 py-1.5 bg-[#00C853] text-[#0A0F1E] font-black text-xs rounded-xl">
+                + Analyze
+              </button>
+            </div>
+
+            <!-- Stats Grid Cards -->
+            <div class="space-y-3">
+              <div class="bg-[#111827] border border-[#00C853]/40 p-4 rounded-2xl space-y-1">
+                <div class="flex justify-between items-center">
+                  <span class="text-[10px] font-extrabold text-slate-400">AI PERFORMANCE RATING</span>
+                  <span class="text-sm">⚡</span>
+                </div>
+                <div class="text-3xl font-black text-[#00C853]">8.4 <span class="text-xs text-slate-500 font-normal">/ 10</span></div>
+                <p class="text-[10px] text-slate-400">Top 15% in Advanced Tier</p>
+              </div>
+
+              <div class="bg-[#111827] border border-[#1F2937] p-4 rounded-2xl space-y-1">
+                <div class="flex justify-between items-center">
+                  <span class="text-[10px] font-extrabold text-slate-400">WIN RATE</span>
+                  <span class="text-sm">🏆</span>
+                </div>
+                <div class="text-2xl font-black text-blue-400">68%</div>
+                <p class="text-[10px] text-slate-400">12 Matches Analyzed</p>
+              </div>
+
+              <div class="bg-[#111827] border border-[#1F2937] p-4 rounded-2xl space-y-1">
+                <div class="flex justify-between items-center">
+                  <span class="text-[10px] font-extrabold text-slate-400">WEAKNESS INDEX</span>
+                  <span class="text-sm">⚠️</span>
+                </div>
+                <div class="text-2xl font-black text-amber-400">32</div>
+                <p class="text-[10px] text-slate-400">Low Vulnerability Score</p>
+              </div>
+            </div>
+
+            <!-- Top Weakness Banner -->
+            <div class="bg-[#111827] border border-rose-500/30 p-4 rounded-2xl space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="text-xs font-bold text-rose-400">⚠️ Target Vulnerability</span>
+                <span class="text-[9px] font-black bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded">HIGH</span>
+              </div>
+              <p class="text-xs text-slate-200">Late shoulder turn when returning deep overhead clears.</p>
+              <button onclick="switchScreen('results')" class="text-xs text-[#00C853] font-bold">
+                View Prescribed Drills →
+              </button>
+            </div>
+          </div>
+        `;
+      } else if (screen === 'upload') {
+        container.innerHTML = `
+          <div class="space-y-4 pb-6">
+            <div class="pt-2">
+              <h1 class="text-lg font-black text-white">New Match Video</h1>
+              <p class="text-[11px] text-slate-400">Select footage from gallery</p>
+            </div>
+
+            <!-- Video Picker Box -->
+            <div onclick="simulateVideoPick()" class="border-2 border-dashed border-[#1F2937] bg-[#111827] p-6 rounded-2xl text-center space-y-2 cursor-pointer hover:border-[#00C853]">
+              <div class="text-2xl">📹</div>
+              <span id="picker-label" class="text-xs font-bold text-white block">Tap to select video from Gallery (expo-av)</span>
+              <span class="text-[10px] text-slate-500 block">Supports MP4, MOV (Up to 100MB)</span>
+            </div>
+
+            <!-- Form -->
+            <div class="bg-[#111827] border border-[#1F2937] p-4 rounded-2xl space-y-3">
+              <div>
+                <label class="text-[10px] font-extrabold text-slate-400 block mb-1">OPPONENT NAME</label>
+                <input id="upload-opp-name" type="text" value="Viktor Axelsen" class="w-full bg-[#0A0F1E] border border-[#1F2937] px-3 py-2 rounded-xl text-xs text-white">
+              </div>
+
+              <div>
+                <label class="text-[10px] font-extrabold text-slate-400 block mb-1">RESULT</label>
+                <div class="flex gap-2">
+                  <button class="flex-1 py-1.5 rounded-xl bg-[#00C853]/20 border border-[#00C853] text-[#00C853] font-bold text-xs">🏆 WIN</button>
+                  <button class="flex-1 py-1.5 rounded-xl bg-[#0A0F1E] border border-[#1F2937] text-slate-400 font-bold text-xs">❌ LOSS</button>
+                </div>
+              </div>
+
+              <div>
+                <label class="text-[10px] font-extrabold text-slate-400 block mb-1">SCORE</label>
+                <input type="text" value="21-18, 21-16" class="w-full bg-[#0A0F1E] border border-[#1F2937] px-3 py-2 rounded-xl text-xs text-white">
+              </div>
+            </div>
+
+            <!-- Progress Bar Container -->
+            <div id="sim-progress-box" class="hidden bg-[#111827] border border-[#00C853] p-3 rounded-2xl space-y-2">
+              <div class="flex justify-between text-xs font-bold">
+                <span class="text-white">Uploading & Analyzing...</span>
+                <span id="sim-percent" class="text-[#00C853]">0%</span>
+              </div>
+              <div class="w-full h-2 bg-[#0A0F1E] rounded-full overflow-hidden">
+                <div id="sim-bar" class="h-full bg-[#00C853] w-0 transition-all duration-200"></div>
+              </div>
+            </div>
+
+            <button onclick="startSimulatedUpload()" class="w-full py-3.5 bg-[#00C853] text-[#0A0F1E] font-black text-xs rounded-xl uppercase">
+              🚀 START GEMINI AI ANALYSIS
+            </button>
+          </div>
+        `;
+      } else if (screen === 'results') {
+        container.innerHTML = `
+          <div class="space-y-4 pb-6">
+            <div class="flex items-center justify-between pt-2">
+              <button onclick="switchScreen('history')" class="text-xs text-slate-400 font-bold">← History</button>
+              <span class="text-[9px] font-black text-[#00C853] bg-[#00C853]/15 px-2 py-0.5 rounded">GEMINI 2.5 REPORT</span>
+            </div>
+
+            <!-- Match Hero Banner -->
+            <div class="bg-[#111827] border border-[#1F2937] p-4 rounded-2xl flex items-center justify-between">
+              <div>
+                <span class="text-[9px] font-bold text-[#00C853] uppercase">Badminton Match</span>
+                <h1 class="text-base font-black text-white">vs Viktor Axelsen</h1>
+                <span class="text-[10px] text-slate-400">2026-08-12 • 21-18, 21-16</span>
+              </div>
+              <div class="bg-[#0A0F1E] border-2 border-[#00C853] p-2 rounded-xl text-center min-w-[55px]">
+                <span class="text-[8px] font-bold text-slate-400 block">RATING</span>
+                <span class="text-xl font-black text-[#00C853] leading-none">8.5</span>
+              </div>
+            </div>
+
+            <!-- Accordion Section 1: AI Coach Synthesis -->
+            <div class="bg-[#111827] border border-[#1F2937] rounded-xl overflow-hidden">
+              <div class="p-3 bg-[#111827] flex justify-between items-center text-xs font-bold text-white">
+                <span>⚡ AI COACH SYNTHESIS</span>
+                <span class="text-[#00C853]">▲</span>
+              </div>
+              <div class="p-3 border-t border-[#1F2937] text-xs text-slate-300 leading-relaxed">
+                Player maintained high explosive movement during early sets, achieving 72% net control. Strategic focus recommended for deep rear corner recovery.
+              </div>
+            </div>
+
+            <!-- Accordion Section 2: Observed Vulnerabilities -->
+            <div class="bg-[#111827] border border-[#1F2937] rounded-xl overflow-hidden">
+              <div class="p-3 bg-[#111827] flex justify-between items-center text-xs font-bold text-white">
+                <span>⚠️ VULNERABILITIES</span>
+                <span class="text-[#00C853]">▲</span>
+              </div>
+              <div class="p-3 border-t border-[#1F2937] space-y-2 text-xs text-slate-300">
+                <div class="flex gap-2">
+                  <span class="text-rose-400">•</span>
+                  <span>Late shoulder turn on backhand rear corner recovery.</span>
+                </div>
+                <div class="flex gap-2">
+                  <span class="text-rose-400">•</span>
+                  <span>Over-relying on high risk flat drives during Set 3.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Accordion Section 3: Prescribed Drills -->
+            <div class="bg-[#111827] border border-[#1F2937] rounded-xl overflow-hidden">
+              <div class="p-3 bg-[#111827] flex justify-between items-center text-xs font-bold text-white">
+                <span>🎯 PRESCRIBED DRILLS</span>
+                <span class="text-[#00C853]">▲</span>
+              </div>
+              <div class="p-3 border-t border-[#1F2937] space-y-2">
+                <div class="bg-[#0A0F1E] p-2.5 rounded-lg border border-[#1F2937]">
+                  <span class="text-xs font-bold text-[#00C853] block">📍 Scissor Kick Rear Corner Drill</span>
+                  <span class="text-[10px] text-slate-400 block mt-0.5">4 sets x 15 reps shadow court shuffles.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (screen === 'history') {
+        const cachedBadge = isOffline ? `
+          <div class="bg-amber-500/15 border border-amber-500/40 px-2 py-0.5 rounded text-[9px] font-black text-amber-400">
+            OFFLINE CACHE (5 MATCHES)
+          </div>
+        ` : '';
+
+        container.innerHTML = `
+          <div class="space-y-4 pb-6">
+            <div class="flex items-center justify-between pt-2">
+              <div>
+                <h1 class="text-lg font-black text-white">Match History</h1>
+                <p class="text-[11px] text-slate-400">FlatList of Gemini Reports</p>
+              </div>
+              ${cachedBadge}
+            </div>
+
+            <!-- Match Card 1 -->
+            <div onclick="switchScreen('results')" class="bg-[#111827] border border-[#1F2937] p-3.5 rounded-2xl space-y-2 cursor-pointer hover:border-[#00C853]">
+              <div class="flex justify-between items-center">
+                <span class="text-[10px] font-bold text-[#00C853] uppercase">Badminton • 2026-08-12</span>
+                <span class="text-[10px] font-black text-[#00C853] bg-[#00C853]/20 px-2 py-0.5 rounded">WIN</span>
+              </div>
+              <div class="text-sm font-bold text-white">vs Viktor Axelsen</div>
+              <div class="text-xs text-slate-400">Score: 21-18, 21-16</div>
+              <div class="pt-2 border-t border-[#1F2937] flex justify-between items-center text-[11px]">
+                <span class="text-slate-300">⚠️ Overhead backhand recovery</span>
+                <span class="text-[#00C853] font-bold">8.5 Rating</span>
+              </div>
+            </div>
+
+            <!-- Match Card 2 -->
+            <div onclick="switchScreen('results')" class="bg-[#111827] border border-[#1F2937] p-3.5 rounded-2xl space-y-2 cursor-pointer hover:border-[#00C853]">
+              <div class="flex justify-between items-center">
+                <span class="text-[10px] font-bold text-[#00C853] uppercase">Badminton • 2026-08-08</span>
+                <span class="text-[10px] font-black text-rose-400 bg-rose-500/20 px-2 py-0.5 rounded">LOSS</span>
+              </div>
+              <div class="text-sm font-bold text-white">vs Shi Yuqi</div>
+              <div class="text-xs text-slate-400">Score: 19-21, 21-18, 18-21</div>
+              <div class="pt-2 border-t border-[#1F2937] flex justify-between items-center text-[11px]">
+                <span class="text-slate-300">⚠️ Drop shot clearance margin</span>
+                <span class="text-amber-400 font-bold">7.8 Rating</span>
+              </div>
+            </div>
+
+            <!-- Match Card 3 -->
+            <div onclick="switchScreen('results')" class="bg-[#111827] border border-[#1F2937] p-3.5 rounded-2xl space-y-2 cursor-pointer hover:border-[#00C853]">
+              <div class="flex justify-between items-center">
+                <span class="text-[10px] font-bold text-[#00C853] uppercase">Badminton • 2026-08-01</span>
+                <span class="text-[10px] font-black text-[#00C853] bg-[#00C853]/20 px-2 py-0.5 rounded">WIN</span>
+              </div>
+              <div class="text-sm font-bold text-white">vs Anders Antonsen</div>
+              <div class="text-xs text-slate-400">Score: 21-14, 21-17</div>
+              <div class="pt-2 border-t border-[#1F2937] flex justify-between items-center text-[11px]">
+                <span class="text-slate-300">⚠️ Mid-court drive consistency</span>
+                <span class="text-[#00C853] font-bold">8.8 Rating</span>
+              </div>
+            </div>
+
+          </div>
+        `;
+      } else if (screen === 'profile') {
+        container.innerHTML = `
+          <div class="space-y-4 pb-6">
+            <div class="pt-2 text-center space-y-2">
+              <div class="w-16 h-16 rounded-full bg-[#00C853]/20 border-2 border-[#00C853] flex items-center justify-center text-xl font-bold text-[#00C853] mx-auto">
+                AC
+              </div>
+              <h1 class="text-lg font-black text-white">Alex Chen</h1>
+              <p class="text-xs text-slate-400">alex.chen@smashsense.ai</p>
+              <span class="inline-block text-[10px] font-bold text-[#00C853] bg-[#00C853]/15 border border-[#00C853]/30 px-3 py-1 rounded-full">
+                ⚡ Advanced Tier Athlete
+              </span>
+            </div>
+
+            <!-- Stats Card -->
+            <div class="bg-[#111827] border border-[#1F2937] p-4 rounded-2xl space-y-3">
+              <span class="text-[10px] font-extrabold text-[#00C853]">ATHLETE METRICS</span>
+              <div class="grid grid-cols-3 text-center divide-x divide-[#1F2937]">
+                <div>
+                  <span class="text-lg font-black text-white block">84</span>
+                  <span class="text-[10px] text-slate-400 block">AI Rating</span>
+                </div>
+                <div>
+                  <span class="text-lg font-black text-white block">68%</span>
+                  <span class="text-[10px] text-slate-400 block">Win Rate</span>
+                </div>
+                <div>
+                  <span class="text-lg font-black text-white block">12</span>
+                  <span class="text-[10px] text-slate-400 block">Analyzed</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Settings -->
+            <div class="bg-[#111827] border border-[#1F2937] p-4 rounded-2xl space-y-3">
+              <span class="text-[10px] font-extrabold text-[#00C853]">SETTINGS</span>
+              <div class="flex justify-between items-center text-xs">
+                <span>Push Notifications</span>
+                <span class="text-[#00C853] font-bold">Enabled</span>
+              </div>
+              <div class="flex justify-between items-center text-xs">
+                <span>AsyncStorage Cache</span>
+                <span class="text-[#00C853] font-bold">Active</span>
+              </div>
+            </div>
+
+            <button onclick="switchScreen('login')" class="w-full py-3 bg-rose-500/20 border border-rose-500/40 text-rose-400 font-bold text-xs rounded-xl">
+              🚪 Sign Out of SmashSense
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    // Switch screen helper
+    function switchScreen(screen) {
+      renderScreen(screen);
+    }
+
+    // Test push notification alert simulator
+    function testPushNotification() {
+      const banner = document.getElementById('expo-push-banner');
+      banner.classList.remove('hidden');
+      setTimeout(() => {
+        banner.classList.add('hidden');
+      }, 5000);
+    }
+
+    function hidePushNotification() {
+      document.getElementById('expo-push-banner').classList.add('hidden');
+    }
+
+    // Toggle Offline Cache mode
+    function toggleOfflineMode() {
+      isOffline = !isOffline;
+      const btn = document.getElementById('offline-toggle-btn');
+      if (isOffline) {
+        btn.innerHTML = '<span>📶 Offline Mode: ON</span>';
+        btn.classList.add('bg-amber-500/20', 'text-amber-400', 'border-amber-500/40');
+      } else {
+        btn.innerHTML = '<span>📶 Offline Mode: OFF</span>';
+        btn.classList.remove('bg-amber-500/20', 'text-amber-400', 'border-amber-500/40');
+      }
+      if (currentScreen === 'history') {
+        renderScreen('history');
+      }
+    }
+
+    // Simulated Video Picker
+    function simulateVideoPick() {
+      const label = document.getElementById('picker-label');
+      if (label) {
+        label.innerText = '✅ Video Selected: match_footage_2026.mp4 (48.2 MB)';
+        label.classList.add('text-[#00C853]');
+      }
+    }
+
+    // Simulated Upload
+    function startSimulatedUpload() {
+      const progressBox = document.getElementById('sim-progress-box');
+      const bar = document.getElementById('sim-bar');
+      const percent = document.getElementById('sim-percent');
+      if (!progressBox) return;
+
+      progressBox.classList.remove('hidden');
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 25;
+        bar.style.width = `${progress}%`;
+        percent.innerText = `${progress}%`;
+
+        if (progress >= 100) {
+          clearInterval(interval);
+          testPushNotification();
+          setTimeout(() => {
+            switchScreen('results');
+          }, 800);
+        }
+      }, 300);
+    }
+
+    // Initialize default screen
+    renderScreen('dashboard');
+  </script>
+</body>
+</html>

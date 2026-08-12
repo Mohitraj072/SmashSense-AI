@@ -88,9 +88,14 @@
             ⚡ SmashSense AI Dashboard
           </div>
 
-          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
-            Welcome back, <span id="hero-user-name" class="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">Lee Zii Jia</span> 👋
-          </h2>
+          <div class="flex items-center gap-3 flex-wrap">
+            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
+              Welcome back, <span id="hero-user-name" class="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">Lee Zii Jia</span> 👋
+            </h2>
+            <span id="hero-sport-badge" class="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-black flex items-center gap-1.5 shadow-sm">
+              <span id="hero-sport-icon">🏸</span> <span id="hero-sport-name">Badminton</span>
+            </span>
+          </div>
 
           <div class="pt-0.5">
             <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-bold shadow-md shadow-rose-500/10">
@@ -259,6 +264,105 @@
 
     </div>
 
+    <!-- Community Comparison: How You Stack Up Card -->
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-5">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+        <div>
+          <h2 class="text-base sm:text-lg font-black text-white flex items-center gap-2">
+            👥 Community Comparison (How You Stack Up)
+          </h2>
+          <p class="text-xs text-slate-400">Anonymous aggregate benchmarks for players at your level</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="peer-level-badge" class="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-extrabold uppercase">
+            Advanced Tier (75-100)
+          </span>
+          <span class="px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 text-xs font-semibold">
+            🔒 Fully Anonymous
+          </span>
+        </div>
+      </div>
+
+      <!-- Percentile Summary Banner -->
+      <div class="bg-gradient-to-r from-emerald-500/20 via-teal-500/15 to-cyan-500/20 border border-emerald-500/40 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg shadow-emerald-500/5">
+        <div class="flex items-center gap-3">
+          <span class="p-2.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-lg">🏆</span>
+          <div>
+            <span class="text-[10px] font-black uppercase tracking-wider text-emerald-400 block">HOW YOU STACK UP</span>
+            <p id="percentile-text" class="text-sm sm:text-base font-black text-white">
+              You are in the top 28% for Win Rate at Advanced level
+            </p>
+          </div>
+        </div>
+        <span class="px-3 py-1 rounded-xl bg-slate-950/80 border border-emerald-500/30 text-xs font-bold text-emerald-300">
+          Tier Top Quartile ⚡
+        </span>
+      </div>
+
+      <!-- Radar Chart & Metrics Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Radar Chart Container -->
+        <div class="lg:col-span-7 bg-slate-950/70 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider">5-Axis Skill Benchmark</span>
+            <span class="text-[10px] text-slate-400 font-bold">You (Green) vs Level Average (Gray)</span>
+          </div>
+          <div class="relative w-full h-64 sm:h-72">
+            <canvas id="peerRadarChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Metric Benchmarks + Gemini AI Note -->
+        <div class="lg:col-span-5 space-y-4 flex flex-col justify-between">
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3 space-y-0.5">
+              <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Avg AI Rating</span>
+              <div class="flex items-baseline gap-1">
+                <span id="avg-rating-val" class="text-lg font-black text-white">81.2</span>
+                <span id="your-rating-val" class="text-[10px] font-bold text-emerald-400">(You: 84)</span>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3 space-y-0.5">
+              <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Avg Win Rate</span>
+              <div class="flex items-baseline gap-1">
+                <span id="avg-winrate-val" class="text-lg font-black text-white">58.5%</span>
+                <span id="your-winrate-val" class="text-[10px] font-bold text-emerald-400">(You: 68%)</span>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3 space-y-0.5">
+              <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Avg Smash Speed</span>
+              <div class="flex items-baseline gap-1">
+                <span id="avg-smash-val" class="text-lg font-black text-white">265 <span class="text-[9px] text-slate-400">km/h</span></span>
+                <span class="text-[10px] font-bold text-amber-400">(You: 282)</span>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3 space-y-0.5">
+              <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Top Level Weakness</span>
+              <p id="top-weakness-val" class="text-xs font-bold text-rose-400 truncate">Deep Backhand Corner Recovery</p>
+            </div>
+          </div>
+
+          <!-- Motivational Note -->
+          <div class="bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950/40 border border-emerald-500/30 rounded-xl p-4 space-y-2 relative overflow-hidden">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                🤖 Gemini AI Coach Insights
+              </span>
+              <span class="text-xs text-emerald-400">✨</span>
+            </div>
+            <p id="motivational-note" class="text-xs text-slate-200 leading-relaxed italic font-medium">
+              "Your offensive firepower and 68% win rate comfortably outperform the Advanced benchmark! Focus on sharpening your backhand corner recovery to lock in your spot in the top 10%."
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
     <!-- Monthly Wins vs Losses Chart Card -->
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-slate-800/80">
@@ -286,6 +390,45 @@
       </div>
     </div>
 
+    <!-- Fitness Trend Line Chart Card (Last 5 Matches Heart Rate) -->
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="text-base font-black text-white flex items-center gap-2">
+              ⌚ Fitness Trend (Last 5 Matches)
+            </h2>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+              WEARABLE DATA
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">Average vs Peak Heart Rate (BPM) across recent analyzed matches</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div class="hidden sm:flex items-center gap-3 text-xs font-bold">
+            <div class="flex items-center gap-1.5">
+              <span class="w-3 h-3 rounded-full bg-emerald-400 inline-block"></span>
+              <span class="text-slate-300">Avg HR</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-3 h-3 rounded-full bg-rose-500 inline-block"></span>
+              <span class="text-slate-300">Peak HR</span>
+            </div>
+          </div>
+
+          <a href="/wearable.html" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 text-xs font-bold border border-slate-700 hover:border-emerald-500/30 transition-all flex items-center gap-1.5">
+            <span>Manage Wearable Data →</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Line Chart Canvas Container -->
+      <div class="relative w-full h-72 sm:h-80">
+        <canvas id="fitnessTrendChart"></canvas>
+      </div>
+    </div>
+
   </div>
 
   <script>
@@ -293,6 +436,29 @@
       const totalMatchesEl = document.getElementById('total-matches-val');
       const winRateEl = document.getElementById('win-rate-val');
       const weaknessEl = document.getElementById('common-weakness-val');
+      const userNameEl = document.getElementById('hero-user-name');
+      const sportNameEl = document.getElementById('hero-sport-name');
+      const sportIconEl = document.getElementById('hero-sport-icon');
+
+      let userSport = 'Badminton';
+
+      try {
+        const session = JSON.parse(localStorage.getItem('user_session') || '{}');
+        if (session.name && userNameEl) {
+          userNameEl.textContent = session.name;
+        }
+        if (session.sport) {
+          userSport = session.sport;
+          if (sportNameEl) sportNameEl.textContent = session.sport;
+          if (sportIconEl) {
+            if (session.sport === 'Tennis') sportIconEl.textContent = '🎾';
+            else if (session.sport === 'Squash') sportIconEl.textContent = '💥';
+            else if (session.sport === 'Table Tennis') sportIconEl.textContent = '🏓';
+            else if (session.sport === 'Pickleball') sportIconEl.textContent = '🥒';
+            else sportIconEl.textContent = '🏸';
+          }
+        }
+      } catch(e) {}
 
       let statsData = {
         total_matches: 14,
@@ -388,6 +554,187 @@
           }
         }
       });
+
+      // Render Fitness Trend Line Chart
+      const fitnessCanvas = document.getElementById('fitnessTrendChart');
+      if (fitnessCanvas) {
+        const fitnessCtx = fitnessCanvas.getContext('2d');
+        const trendData = statsData.fitness_trend || [
+          { title: 'vs Marcus', avg_heart_rate: 162, peak_heart_rate: 188 },
+          { title: 'vs Vikram', avg_heart_rate: 152, peak_heart_rate: 178 },
+          { title: 'vs Carlos', avg_heart_rate: 158, peak_heart_rate: 184 },
+          { title: 'vs Paul', avg_heart_rate: 168, peak_heart_rate: 192 },
+          { title: 'vs Ben', avg_heart_rate: 142, peak_heart_rate: 166 }
+        ];
+
+        const trendLabels = trendData.map(t => t.title || (t.opponentName ? 'vs ' + t.opponentName : 'Match'));
+        const avgHrData = trendData.map(t => t.avg_heart_rate || 155);
+        const peakHrData = trendData.map(t => t.peak_heart_rate || 180);
+
+        new Chart(fitnessCtx, {
+          type: 'line',
+          data: {
+            labels: trendLabels,
+            datasets: [
+              {
+                label: 'Avg Heart Rate (BPM)',
+                data: avgHrData,
+                borderColor: '#10b981', // emerald-500
+                backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                fill: true,
+                tension: 0.35,
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                pointBackgroundColor: '#10b981',
+                pointBorderColor: '#0f172a',
+                pointBorderWidth: 2,
+              },
+              {
+                label: 'Peak Heart Rate (BPM)',
+                data: peakHrData,
+                borderColor: '#f43f5e', // rose-500
+                backgroundColor: 'rgba(244, 63, 94, 0.05)',
+                fill: true,
+                tension: 0.35,
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                pointBackgroundColor: '#f43f5e',
+                pointBorderColor: '#0f172a',
+                pointBorderWidth: 2,
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: '#0f172a',
+                borderColor: '#334155',
+                borderWidth: 1,
+                titleFont: { size: 12, weight: 'bold' },
+                bodyFont: { size: 12 },
+                padding: 12,
+                callbacks: {
+                  label: function(context) {
+                    return ` ${context.dataset.label}: ${context.raw} BPM`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: { color: '#1e293b', drawBorder: false },
+                ticks: { color: '#94a3b8', font: { size: 11, weight: '600' } }
+              },
+              y: {
+                grid: { color: '#1e293b', drawBorder: false },
+                ticks: { color: '#94a3b8', font: { size: 11, weight: '600' } },
+                suggestedMin: 120,
+                suggestedMax: 200
+              }
+            }
+          }
+        });
+      }
+
+      // Fetch Peer Comparison Data
+      try {
+        const peerRes = await fetch('/peer_comparison');
+        if (peerRes.ok) {
+          const peerData = await peerRes.json();
+          if (peerData && peerData.status === 'success') {
+            document.getElementById('peer-level-badge').textContent = `${peerData.level} Tier (${peerData.rating_tier || '75-100'})`;
+            document.getElementById('percentile-text').textContent = peerData.percentile_summary;
+            document.getElementById('avg-rating-val').textContent = peerData.community_averages.avg_rating;
+            document.getElementById('your-rating-val').textContent = `(You: ${peerData.player_data.rating})`;
+            document.getElementById('avg-winrate-val').textContent = `${peerData.community_averages.avg_win_rate}%`;
+            document.getElementById('your-winrate-val').textContent = `(You: ${peerData.player_data.win_rate}%)`;
+            document.getElementById('avg-smash-val').innerHTML = `${peerData.community_averages.avg_smash_speed} <span class="text-[9px] text-slate-400">km/h</span>`;
+            document.getElementById('top-weakness-val').textContent = peerData.community_averages.most_common_weakness;
+            document.getElementById('motivational-note').textContent = `"${peerData.motivational_message}"`;
+
+            // Render Chart.js Radar Chart
+            const radarCtx = document.getElementById('peerRadarChart').getContext('2d');
+            const radarLabels = peerData.radar_comparison.map(r => r.attribute);
+            const youScores = peerData.radar_comparison.map(r => r.you);
+            const avgScores = peerData.radar_comparison.map(r => r.levelAverage);
+
+            new Chart(radarCtx, {
+              type: 'radar',
+              data: {
+                labels: radarLabels,
+                datasets: [
+                  {
+                    label: 'You',
+                    data: youScores,
+                    backgroundColor: 'rgba(16, 185, 129, 0.35)',
+                    borderColor: '#10b981',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#10b981',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#10b981'
+                  },
+                  {
+                    label: 'Level Average',
+                    data: avgScores,
+                    backgroundColor: 'rgba(148, 163, 184, 0.25)',
+                    borderColor: '#64748b',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#64748b',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#64748b'
+                  }
+                ]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                      color: '#cbd5e1',
+                      font: { size: 11, weight: 'bold' },
+                      padding: 12
+                    }
+                  },
+                  tooltip: {
+                    backgroundColor: '#0f172a',
+                    borderColor: '#334155',
+                    borderWidth: 1,
+                    titleFont: { size: 12, weight: 'bold' },
+                    bodyFont: { size: 11 }
+                  }
+                },
+                scales: {
+                  r: {
+                    angleLines: { color: '#334155' },
+                    grid: { color: '#1e293b' },
+                    pointLabels: {
+                      color: '#f1f5f9',
+                      font: { size: 11, weight: '700' }
+                    },
+                    ticks: {
+                      color: '#64748b',
+                      backdropColor: 'transparent',
+                      stepSize: 20
+                    },
+                    suggestedMin: 0,
+                    suggestedMax: 100
+                  }
+                }
+              }
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Peer comparison chart error:', err);
+      }
 
     });
   </script>

@@ -17,6 +17,7 @@ import {
   History,
   Bot,
   Sparkles,
+  Users,
 } from 'lucide-react';
 import {
   PieChart,
@@ -36,6 +37,38 @@ import {
   Radar,
 } from 'recharts';
 
+interface PeerComparisonData {
+  status: string;
+  level: string;
+  rating_tier: string;
+  player_data: {
+    rating: number;
+    win_rate: number;
+    smash_speed: number;
+    footwork: number;
+    technique: number;
+    stamina: number;
+  };
+  community_averages: {
+    level: string;
+    tier_range: string;
+    avg_rating: number;
+    avg_win_rate: number;
+    avg_smash_speed: number;
+    most_common_weakness: string;
+    avg_footwork: number;
+    avg_technique: number;
+    avg_stamina: number;
+  };
+  radar_comparison: Array<{
+    attribute: string;
+    you: number;
+    levelAverage: number;
+  }>;
+  percentile_summary: string;
+  motivational_message: string;
+}
+
 interface DashboardPageProps {
   user: User;
   matches: MatchAnalysis[];
@@ -52,6 +85,18 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   onNavigateToHistory,
 }) => {
   const latestMatch = matches[0];
+  const [peerData, setPeerData] = React.useState<PeerComparisonData | null>(null);
+
+  React.useEffect(() => {
+    fetch('/api/peer_comparison')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.status === 'success') {
+          setPeerData(data);
+        }
+      })
+      .catch((err) => console.log('Peer comparison fetch error:', err));
+  }, []);
 
   // Aggregate Shot Distribution for overview
   const totalShotDistribution = matches.reduce(
@@ -85,6 +130,21 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     { subject: 'Stamina', score: 72 },
     { subject: 'Tactical Reading', score: 82 },
   ];
+
+  // Community Comparison Radar Data (5 Axes: AI Rating, Win Rate, Footwork, Technique, Stamina)
+  const communityRadarData = peerData?.radar_comparison
+    ? peerData.radar_comparison.map((item) => ({
+        attribute: item.attribute,
+        You: item.you,
+        'Level Average': item.levelAverage,
+      }))
+    : [
+        { attribute: 'AI Rating', You: user.overallRating || 84, 'Level Average': 81.2 },
+        { attribute: 'Win Rate', You: user.winRate || 68, 'Level Average': 58.5 },
+        { attribute: 'Footwork', You: 78, 'Level Average': 74 },
+        { attribute: 'Technique', You: 86, 'Level Average': 80 },
+        { attribute: 'Stamina', You: 82, 'Level Average': 76 },
+      ];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -411,6 +471,179 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
         </div>
 
+      </div>
+
+      {/* Community Comparison: How You Stack Up Card */}
+      <div id="community-comparison" className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold shadow-md shadow-emerald-500/10">
+                <Users className="w-5 h-5" />
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">Community Comparison</h3>
+            </div>
+            <p className="text-xs text-slate-400 pl-11">
+              Anonymous aggregate benchmarks for players at your skill tier
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="px-3.5 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              {peerData?.level || user.level || 'Advanced'} Tier ({peerData?.rating_tier || '75-100'})
+            </span>
+            <span className="px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 text-xs font-semibold border border-slate-700/80">
+              🔒 Fully Anonymous Data
+            </span>
+          </div>
+        </div>
+
+        {/* Top Percentile Summary Banner */}
+        <div className="bg-gradient-to-r from-emerald-500/20 via-teal-500/15 to-cyan-500/20 border border-emerald-500/40 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl shadow-emerald-500/5">
+          <div className="flex items-center gap-3.5">
+            <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 shrink-0">
+              <Trophy className="w-6 h-6 text-emerald-400" />
+            </div>
+            <div className="space-y-0.5">
+              <span className="text-[11px] font-extrabold uppercase tracking-widest text-emerald-400 block">
+                How You Stack Up
+              </span>
+              <p className="text-sm sm:text-base md:text-lg font-black text-white tracking-tight">
+                {peerData?.percentile_summary || `You are in the top 28% for Win Rate at ${user.level || 'Advanced'} level`}
+              </p>
+            </div>
+          </div>
+          <span className="px-4 py-1.5 rounded-xl bg-slate-950/80 border border-emerald-500/40 text-xs font-bold text-emerald-300 self-start sm:self-auto shrink-0 shadow-inner">
+            Tier Top Quartile ⚡
+          </span>
+        </div>
+
+        {/* Two Column Layout: Radar Chart vs Community Benchmarks */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-1">
+          
+          {/* Radar Chart (5 Axes) */}
+          <div className="lg:col-span-7 bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 flex flex-col justify-between shadow-inner">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                <Activity className="w-4 h-4 text-emerald-400" />
+                5-Axis Skill Radar Comparison
+              </h4>
+              <span className="text-[11px] font-bold text-slate-400">
+                You (Green) vs {peerData?.level || user.level || 'Advanced'} Avg (Gray)
+              </span>
+            </div>
+
+            <div className="h-72 sm:h-80 w-full flex items-center justify-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart cx="50%" cy="50%" outerRadius="75%" data={communityRadarData}>
+                  <PolarGrid stroke="#334155" />
+                  <PolarAngleAxis
+                    dataKey="attribute"
+                    stroke="#94a3b8"
+                    tick={{ fill: '#e2e8f0', fontSize: 11, fontWeight: 700 }}
+                  />
+                  <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#475569" />
+                  <Radar
+                    name="You"
+                    dataKey="You"
+                    stroke="#10b981"
+                    fill="#10b981"
+                    fillOpacity={0.4}
+                  />
+                  <Radar
+                    name="Level Average"
+                    dataKey="Level Average"
+                    stroke="#64748b"
+                    fill="#64748b"
+                    fillOpacity={0.25}
+                  />
+                  <Legend
+                    wrapperStyle={{ paddingTop: '12px', fontSize: '12px', fontWeight: 'bold' }}
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Right Column: Aggregated Benchmarks + Gemini Motivational Note */}
+          <div className="lg:col-span-5 space-y-4 flex flex-col justify-between">
+            
+            {/* 4 Community Metric Cards */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5 space-y-1">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
+                  Avg AI Rating
+                </span>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-xl font-black text-slate-100">
+                    {peerData?.community_averages?.avg_rating || 81.2}
+                  </span>
+                  <span className="text-[11px] font-bold text-emerald-400">
+                    (You: {peerData?.player_data?.rating || user.overallRating || 84})
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5 space-y-1">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
+                  Avg Win Rate
+                </span>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-xl font-black text-slate-100">
+                    {peerData?.community_averages?.avg_win_rate || 58.5}%
+                  </span>
+                  <span className="text-[11px] font-bold text-emerald-400">
+                    (You: {peerData?.player_data?.win_rate || user.winRate || 68}%)
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5 space-y-1">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
+                  Avg Smash Speed
+                </span>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-xl font-black text-slate-100">
+                    {peerData?.community_averages?.avg_smash_speed || 265} <span className="text-[10px] text-slate-400">km/h</span>
+                  </span>
+                  <span className="text-[11px] font-bold text-amber-400">
+                    (You: 282)
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5 space-y-1">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
+                  Top Level Weakness
+                </span>
+                <p className="text-xs font-bold text-rose-400 truncate">
+                  {peerData?.community_averages?.most_common_weakness || 'Deep Backhand Corner Recovery'}
+                </p>
+              </div>
+            </div>
+
+            {/* Gemini Motivational Coaching Note */}
+            <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950/40 border border-emerald-500/30 rounded-2xl p-4 sm:p-5 space-y-2.5 relative overflow-hidden shadow-xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+                    <Bot className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="text-xs font-black text-emerald-400 uppercase tracking-wider">
+                    Gemini AI Coach Insights
+                  </span>
+                </div>
+                <Sparkles className="w-4 h-4 text-emerald-400 animate-pulse" />
+              </div>
+
+              <p className="text-xs sm:text-sm text-slate-200 leading-relaxed italic font-medium">
+                "{peerData?.motivational_message || `Your offensive execution and ${user.winRate || 68}% win rate comfortably outperform the ${user.level || 'Advanced'} benchmark! Focus on sharpening your backhand corner recovery to lock in your spot in the top 10%.`}"
+              </p>
+            </div>
+
+          </div>
+        </div>
       </div>
 
       {/* Main Charts & Analysis Grid */}

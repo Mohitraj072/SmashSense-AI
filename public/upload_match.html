@@ -100,6 +100,129 @@
       <div class="lg:col-span-7 bg-[#111827] border border-[#1F2937] rounded-2xl p-6 sm:p-8 shadow-xl">
         <form id="upload-form" class="space-y-6">
 
+          <!-- Sport Selector -->
+          <div class="space-y-2">
+            <label for="sport-selector" class="block text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">
+              Racket Sport <span class="text-[#00C853]">*</span>
+            </label>
+            <select
+              id="sport-selector"
+              name="sport"
+              required
+              class="w-full px-4 py-3 rounded-xl bg-[#0A0F1E] border border-[#1F2937] text-[#F9FAFB] text-sm focus:outline-none focus:border-[#00C853] transition-colors cursor-pointer font-medium"
+            >
+              <option value="Badminton">🏸 Badminton</option>
+              <option value="Tennis">🎾 Tennis</option>
+              <option value="Squash">💥 Squash</option>
+              <option value="Table Tennis">🏓 Table Tennis</option>
+              <option value="Pickleball">🥒 Pickleball</option>
+            </select>
+          </div>
+
+          <!-- Dynamic Sport-Specific Fields Container -->
+          <div id="sport-fields-container" class="p-4 rounded-xl bg-[#0A0F1E] border border-[#1F2937] space-y-4">
+            
+            <!-- Badminton Fields -->
+            <div id="fields-badminton" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <label for="shuttle_type" class="block text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">Shuttle Type</label>
+                <select id="shuttle_type" name="shuttle_type" class="w-full px-3 py-2.5 rounded-lg bg-[#111827] border border-[#1F2937] text-white text-xs">
+                  <option value="Feather Speed 77">Feather Speed 77</option>
+                  <option value="Feather Speed 78" selected>Feather Speed 78 (Standard)</option>
+                  <option value="Synthetic Nylon">Synthetic Nylon</option>
+                </select>
+              </div>
+              <div class="space-y-2">
+                <label for="court_surface" class="block text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">Court Surface</label>
+                <select id="court_surface" name="court_surface" class="w-full px-3 py-2.5 rounded-lg bg-[#111827] border border-[#1F2937] text-white text-xs">
+                  <option value="Indoor Synthetic Mat" selected>Indoor Synthetic Mat</option>
+                  <option value="Wooden Parquet">Wooden Parquet</option>
+                  <option value="Outdoor Concrete">Outdoor Concrete</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Tennis Fields -->
+            <div id="fields-tennis" class="grid grid-cols-1 sm:grid-cols-2 gap-4 hidden">
+              <div class="space-y-2">
+                <label for="tennis_surface" class="block text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">Court Surface</label>
+                <select id="tennis_surface" name="tennis_surface" class="w-full px-3 py-2.5 rounded-lg bg-[#111827] border border-[#1F2937] text-white text-xs">
+                  <option value="Hard Court" selected>Hard Court</option>
+                  <option value="Red Clay">Red Clay</option>
+                  <option value="Grass">Grass</option>
+                </select>
+              </div>
+              <div class="space-y-2">
+                <label for="set_format" class="block text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">Set Format</label>
+                <select id="set_format" name="set_format" class="w-full px-3 py-2.5 rounded-lg bg-[#111827] border border-[#1F2937] text-white text-xs">
+                  <option value="Best of 3 Sets" selected>Best of 3 Sets</option>
+                  <option value="Pro Set (8 Games)">Pro Set (8 Games)</option>
+                  <option value="Match Tiebreak">Match Tiebreak</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Squash Fields -->
+            <div id="fields-squash" class="grid grid-cols-1 sm:grid-cols-2 gap-4 hidden">
+              <div class="space-y-2">
+                <label for="squash_ball_type" class="block text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">Ball Type</label>
+                <select id="squash_ball_type" name="squash_ball_type" class="w-full px-3 py-2.5 rounded-lg bg-[#111827] border border-[#1F2937] text-white text-xs">
+                  <option value="Double Yellow Dot" selected>Double Yellow Dot (Pro/Tournament)</option>
+                  <option value="Single Yellow Dot">Single Yellow Dot</option>
+                  <option value="Red Dot (Fast)">Red Dot (Fast)</option>
+                </select>
+              </div>
+              <div class="space-y-2">
+                <label for="squash_court_type" class="block text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">Court Type</label>
+                <select id="squash_court_type" name="squash_court_type" class="w-full px-3 py-2.5 rounded-lg bg-[#111827] border border-[#1F2937] text-white text-xs">
+                  <option value="Traditional Plaster Court" selected>Traditional Plaster Court</option>
+                  <option value="All-Glass Show Court">All-Glass Show Court</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Table Tennis Fields -->
+            <div id="fields-table-tennis" class="grid grid-cols-1 sm:grid-cols-2 gap-4 hidden">
+              <div class="space-y-2">
+                <label for="rubber_type" class="block text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">Rubber Type</label>
+                <select id="rubber_type" name="rubber_type" class="w-full px-3 py-2.5 rounded-lg bg-[#111827] border border-[#1F2937] text-white text-xs">
+                  <option value="Inverted Smooth (High Spin)" selected>Inverted Smooth (High Spin)</option>
+                  <option value="Short Pips">Short Pips</option>
+                  <option value="Long Pips">Long Pips</option>
+                  <option value="Anti-Spin">Anti-Spin</option>
+                </select>
+              </div>
+              <div class="space-y-2">
+                <label for="table_tennis_style" class="block text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">Playing Style</label>
+                <select id="table_tennis_style" name="table_tennis_style" class="w-full px-3 py-2.5 rounded-lg bg-[#111827] border border-[#1F2937] text-white text-xs">
+                  <option value="Offensive Two-Wing Looper" selected>Offensive Two-Wing Looper</option>
+                  <option value="Close-Table Counter Attacker">Close-Table Counter Attacker</option>
+                  <option value="Modern Chopper / Defensive">Modern Chopper / Defensive</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Pickleball Fields -->
+            <div id="fields-pickleball" class="grid grid-cols-1 sm:grid-cols-2 gap-4 hidden">
+              <div class="space-y-2">
+                <label for="pickleball_ball_type" class="block text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">Ball Type</label>
+                <select id="pickleball_ball_type" name="pickleball_ball_type" class="w-full px-3 py-2.5 rounded-lg bg-[#111827] border border-[#1F2937] text-white text-xs">
+                  <option value="Outdoor 40-Hole (Franklin X-40)" selected>Outdoor 40-Hole (Franklin X-40)</option>
+                  <option value="Indoor 26-Hole">Indoor 26-Hole</option>
+                </select>
+              </div>
+              <div class="space-y-2">
+                <label for="pickleball_paddle_type" class="block text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">Paddle Type</label>
+                <select id="pickleball_paddle_type" name="pickleball_paddle_type" class="w-full px-3 py-2.5 rounded-lg bg-[#111827] border border-[#1F2937] text-white text-xs">
+                  <option value="Raw Carbon Fiber (High Spin)" selected>Raw Carbon Fiber (High Spin)</option>
+                  <option value="Composite Fiber">Composite Fiber</option>
+                  <option value="Graphite Core">Graphite Core</option>
+                </select>
+              </div>
+            </div>
+
+          </div>
+
           <!-- Drag and Drop Dropzone -->
           <div class="space-y-2">
             <label class="block text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">
@@ -348,6 +471,43 @@
       const dropzone = document.getElementById('dropzone');
       const videoFileInput = document.getElementById('video-file-input');
       const fileLabelMain = document.getElementById('file-label-main');
+
+      const sportSelector = document.getElementById('sport-selector');
+      const fieldsBadminton = document.getElementById('fields-badminton');
+      const fieldsTennis = document.getElementById('fields-tennis');
+      const fieldsSquash = document.getElementById('fields-squash');
+      const fieldsTableTennis = document.getElementById('fields-table-tennis');
+      const fieldsPickleball = document.getElementById('fields-pickleball');
+
+      function updateSportFields(sport) {
+        if (!fieldsBadminton) return;
+        fieldsBadminton.classList.add('hidden');
+        fieldsTennis.classList.add('hidden');
+        fieldsSquash.classList.add('hidden');
+        fieldsTableTennis.classList.add('hidden');
+        fieldsPickleball.classList.add('hidden');
+
+        if (sport === 'Tennis') fieldsTennis.classList.remove('hidden');
+        else if (sport === 'Squash') fieldsSquash.classList.remove('hidden');
+        else if (sport === 'Table Tennis') fieldsTableTennis.classList.remove('hidden');
+        else if (sport === 'Pickleball') fieldsPickleball.classList.remove('hidden');
+        else fieldsBadminton.classList.remove('hidden');
+      }
+
+      // Pre-select user session sport
+      try {
+        const session = JSON.parse(localStorage.getItem('user_session') || '{}');
+        if (session && session.sport && sportSelector) {
+          sportSelector.value = session.sport;
+        }
+      } catch(e) {}
+
+      if (sportSelector) {
+        updateSportFields(sportSelector.value);
+        sportSelector.addEventListener('change', (e) => {
+          updateSportFields(e.target.value);
+        });
+      }
 
       // Win / Loss Toggle Buttons
       const btnWin = document.getElementById('btn-win');

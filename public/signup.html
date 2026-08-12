@@ -39,17 +39,17 @@
     <!-- Brand Logo & Header -->
     <div class="text-center space-y-2">
       <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-500 to-cyan-400 text-slate-950 font-black text-2xl shadow-xl shadow-emerald-500/20 mb-2">
-        🏸
+        ⚡
       </div>
-      <h1 class="text-2xl font-black text-white tracking-tight">SmashSense.AI</h1>
-      <p class="text-xs text-slate-400">Badminton AI Match Analysis & Performance Hub</p>
+      <h1 class="text-2xl font-black text-white tracking-tight">SmashSense<span class="text-emerald-400">.AI</span></h1>
+      <p class="text-xs text-slate-400 font-medium">Multi-Sport Racket Performance & AI Video Analytics</p>
     </div>
 
     <!-- Signup Card -->
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5">
       <div class="border-b border-slate-800 pb-3">
         <h2 class="text-lg font-extrabold text-white">Create New Account</h2>
-        <p class="text-xs text-slate-400">Join SmashSense.AI to analyze matches and improve your court game</p>
+        <p class="text-xs text-slate-400">Select your primary sport and analyze your match footage</p>
       </div>
 
       <!-- Alert Error Message -->
@@ -71,12 +71,27 @@
         </div>
 
         <div>
+          <label for="sport" class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Primary Racket Sport</label>
+          <select
+            id="sport"
+            required
+            class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-emerald-500 transition-all cursor-pointer"
+          >
+            <option value="Badminton" selected>🏸 Badminton</option>
+            <option value="Tennis">🎾 Tennis</option>
+            <option value="Squash">💥 Squash</option>
+            <option value="Table Tennis">🏓 Table Tennis</option>
+            <option value="Pickleball">🥒 Pickleball</option>
+          </select>
+        </div>
+
+        <div>
           <label for="email" class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Email Address</label>
           <input
             type="email"
             id="email"
             required
-            placeholder="player@badminton.com"
+            placeholder="player@smashsense.ai"
             class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 transition-all"
           />
         </div>
@@ -154,6 +169,7 @@
 
     const signupForm = document.getElementById('signup-form');
     const nameInput = document.getElementById('name');
+    const sportInput = document.getElementById('sport');
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
     const errorMsg = document.getElementById('error-message');
@@ -165,6 +181,7 @@
       errorMsg.classList.add('hidden');
 
       const name = nameInput.value.trim();
+      const sport = sportInput.value || 'Badminton';
       const email = emailInput.value.trim();
       const password = passwordInput.value.trim();
 
@@ -194,14 +211,26 @@
           await setDoc(doc(db, "users", user.uid), {
             name: name,
             email: email,
+            sport: sport,
             created_at: serverTimestamp()
           });
 
           console.log("User successfully created and stored in Firestore users collection:", user.uid);
         }
 
-        // Store session marker
-        localStorage.setItem('user_session', JSON.stringify({ name, email, loggedIn: true }));
+        // Send to profile backend route
+        try {
+          await fetch('/profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, sport })
+          });
+        } catch(err) {
+          console.warn("Backend profile save fallback:", err);
+        }
+
+        // Store session marker with sport
+        localStorage.setItem('user_session', JSON.stringify({ name, email, sport, loggedIn: true }));
 
         // Redirect to dashboard on success
         window.location.href = '/dashboard.html';
@@ -209,7 +238,14 @@
       } catch (error) {
         // Fallback for missing/invalid API key
         if (!isRealFirebaseConfig || error.code === 'auth/api-key-not-valid' || error.code === 'auth/invalid-api-key' || (error.message && error.message.includes('api-key-not-valid'))) {
-          localStorage.setItem('user_session', JSON.stringify({ name, email, loggedIn: true }));
+          try {
+            await fetch('/profile', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name, email, sport })
+            });
+          } catch(e) {}
+          localStorage.setItem('user_session', JSON.stringify({ name, email, sport, loggedIn: true }));
           window.location.href = '/dashboard.html';
           return;
         }

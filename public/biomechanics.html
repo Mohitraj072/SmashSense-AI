@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MediaPipe Pose Biomechanics - SmashSense.AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brandBg: '#0A0F1E',
+            brandCard: '#111827',
+            brandBorder: '#1F2937',
+            brandAccent: '#00C853',
+            brandWarning: '#FF6B35',
+            brandInfo: '#3B82F6',
+            brandTextPrimary: '#F9FAFB',
+            brandTextSecondary: '#9CA3AF',
+            brandSuccess: '#10B981',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#0A0F1E] text-[#F9FAFB] font-sans antialiased min-h-screen">
+
+  <div id="navbar-container"></div>
+  <script src="/navbar.js"></script>
+
+  <main class="max-w-7xl mx-auto space-y-8 p-4 sm:p-6 lg:p-8 pb-24">
+
+    <!-- Page Header -->
+    <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-1 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-black uppercase tracking-wide flex items-center gap-1.5">
+            <span>🦴</span> MediaPipe Pose AI Engine
+          </span>
+          <span class="px-2 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-400 text-[10px] font-bold">
+            33 Keypoints Tracked @ 60 FPS
+          </span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
+          Biomechanical Motion & Injury Risk Analysis
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-400">
+          Computer vision joint angle tracking, kinetic chain alignment, and deceleration strain detection.
+        </p>
+      </div>
+
+      <a href="/dashboard.html" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 transition-all flex items-center gap-2">
+        <span>← Back to Dashboard</span>
+      </a>
+    </header>
+
+    <!-- Top Control Bar: Match & Stroke Selector -->
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+        <div class="space-y-1 w-full sm:w-64">
+          <label class="block text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+            Select Match Record
+          </label>
+          <select id="biomechanics-match-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white font-medium focus:outline-none focus:border-emerald-500 transition-colors">
+            <option value="match_01">Semi-Final vs Marcus Vance (Badminton)</option>
+            <option value="match_02">Quarter-Final vs Vikram Patel (Badminton)</option>
+            <option value="match_03">Clay Court Championship vs Carlos (Tennis)</option>
+          </select>
+        </div>
+
+        <div class="space-y-1 w-full sm:w-60">
+          <label class="block text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+            Stroke Type
+          </label>
+          <select id="biomechanics-stroke-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white font-medium focus:outline-none focus:border-emerald-500 transition-colors">
+            <option value="Jump Smash & Court Lunges">Jump Smash & Court Lunges</option>
+            <option value="Forehand High Clear">Forehand High Clear</option>
+            <option value="Backhand Drive & Recovery">Backhand Drive & Recovery</option>
+            <option value="Net Kill & Drop Deceleration">Net Kill & Drop Deceleration</option>
+          </select>
+        </div>
+      </div>
+
+      <button id="reanalyze-btn" class="w-full md:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-400 hover:from-emerald-400 hover:to-cyan-300 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2">
+        <span>⚡ Re-Run MediaPipe Pose Extraction</span>
+      </button>
+    </div>
+
+    <!-- Overall Biomechanics Score Header Card -->
+    <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-6 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6">
+      <div class="space-y-2 text-center md:text-left">
+        <div class="flex items-center justify-center md:justify-start gap-2">
+          <span class="px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-black uppercase">
+            ⚠️ Attention Required: 2 Injury Risk Flags Detected
+          </span>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-black text-white">
+          Biomechanical Efficiency & Kinetic Integrity
+        </h2>
+        <p class="text-xs text-slate-300 max-w-2xl">
+          MediaPipe pose estimation identified <strong>Elbow Hyperextension (176°)</strong> during full power smashes and <strong>Acute Knee Flexion (82°)</strong> during front-court lunges, increasing joint wear and ligament strain.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-4 bg-slate-950/90 px-6 py-4 rounded-2xl border border-slate-800 shadow-inner">
+        <div class="text-right">
+          <span class="text-[11px] text-slate-400 font-extrabold uppercase block tracking-wider">Overall Score</span>
+          <span id="overall-score-val" class="text-4xl font-black bg-gradient-to-r from-amber-400 via-emerald-400 to-teal-300 bg-clip-text text-transparent">
+            78 / 100
+          </span>
+        </div>
+        <div class="w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 text-2xl font-bold shadow-lg shadow-amber-500/10">
+          🦴
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Grid: SVG Body Diagram vs Video Pose Track & Key Stats -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- Left Column: Interactive SVG Body Diagram with Color-Coded Joints -->
+      <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4 flex flex-col items-center">
+        <div class="w-full flex items-center justify-between pb-3 border-b border-slate-800">
+          <div>
+            <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+              <span>🧘‍♂️</span> Pose Joint Health Map
+            </h3>
+            <p class="text-xs text-slate-400">Color-coded joint stress vector map</p>
+          </div>
+          <div class="flex items-center gap-2 text-[10px] font-bold">
+            <span class="flex items-center gap-1 text-emerald-400"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Good</span>
+            <span class="flex items-center gap-1 text-amber-400"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Warning</span>
+            <span class="flex items-center gap-1 text-rose-400"><span class="w-2 h-2 rounded-full bg-rose-500"></span> Risk</span>
+          </div>
+        </div>
+
+        <!-- SVG Human Figure Body Diagram -->
+        <div class="relative w-full max-w-xs h-[420px] bg-slate-950/80 rounded-2xl border border-slate-800/80 p-4 flex items-center justify-center shadow-inner">
+          <svg viewBox="0 0 200 380" class="w-full h-full drop-shadow-md">
+            <!-- Background Body Contour Lines -->
+            <path d="M100 20 L100 360" stroke="#1e293b" stroke-width="2" stroke-dasharray="4 4" />
+            
+            <!-- Torso Spine & Hip Line -->
+            <line x1="100" y1="70" x2="100" y2="190" stroke="#64748b" stroke-width="6" stroke-linecap="round" />
+            
+            <!-- Shoulder Line -->
+            <line x1="60" y1="90" x2="140" y2="90" stroke="#64748b" stroke-width="6" stroke-linecap="round" />
+            
+            <!-- Pelvis Line -->
+            <line x1="75" y1="190" x2="125" y2="190" stroke="#64748b" stroke-width="6" stroke-linecap="round" />
+
+            <!-- Left Arm (Upper & Forearm) -->
+            <line x1="60" y1="90" x2="35" y2="135" stroke="#64748b" stroke-width="5" stroke-linecap="round" />
+            <line x1="35" y1="135" x2="20" y2="175" stroke="#64748b" stroke-width="4" stroke-linecap="round" />
+
+            <!-- Right Arm (Smash Arm - Upper & Forearm) -->
+            <line x1="140" y1="90" x2="175" y2="125" stroke="#ef4444" stroke-width="6" stroke-linecap="round" />
+            <line x1="175" y1="125" x2="185" y2="170" stroke="#ef4444" stroke-width="5" stroke-linecap="round" />
+
+            <!-- Left Leg (Thigh & Calf) -->
+            <line x1="75" y1="190" x2="65" y2="270" stroke="#ef4444" stroke-width="6" stroke-linecap="round" />
+            <line x1="65" y1="270" x2="55" y2="340" stroke="#ef4444" stroke-width="5" stroke-linecap="round" />
+
+            <!-- Right Leg (Thigh & Calf) -->
+            <line x1="125" y1="190" x2="135" y2="270" stroke="#64748b" stroke-width="5" stroke-linecap="round" />
+            <line x1="135" y1="270" x2="145" y2="340" stroke="#64748b" stroke-width="5" stroke-linecap="round" />
+
+            <!-- JOINT NODES WITH DYNAMIC COLORING -->
+            <!-- 1. Head Node -->
+            <circle id="node-head" cx="100" cy="45" r="14" fill="#10b981" fill-opacity="0.2" stroke="#10b981" stroke-width="3" class="cursor-pointer hover:scale-125 transition-transform" />
+            <text x="100" y="49" text-anchor="middle" fill="#ffffff" font-size="9" font-weight="bold">HEAD</text>
+
+            <!-- 2. Left Shoulder -->
+            <circle id="node-l-shoulder" cx="60" cy="90" r="7" fill="#10b981" stroke="#ffffff" stroke-width="2" />
+            <!-- 3. Right Shoulder -->
+            <circle id="node-r-shoulder" cx="140" cy="90" r="8" fill="#10b981" stroke="#ffffff" stroke-width="2" />
+
+            <!-- 4. Right Elbow (RISK - HYPEREXTENSION) -->
+            <circle id="node-r-elbow" cx="175" cy="125" r="11" fill="#ef4444" fill-opacity="0.3" stroke="#ef4444" stroke-width="3" class="animate-pulse cursor-pointer" />
+            <circle cx="175" cy="125" r="5" fill="#ef4444" />
+            <text x="175" y="110" text-anchor="middle" fill="#ef4444" font-size="8" font-weight="extrabold">176° RISK</text>
+
+            <!-- 5. Left Elbow -->
+            <circle id="node-l-elbow" cx="35" cy="135" r="6" fill="#10b981" stroke="#ffffff" stroke-width="2" />
+
+            <!-- 6. Pelvis / Hips (WARNING) -->
+            <circle id="node-hip" cx="100" cy="190" r="9" fill="#f59e0b" fill-opacity="0.3" stroke="#f59e0b" stroke-width="2.5" />
+            <circle cx="100" cy="190" r="4" fill="#f59e0b" />
+
+            <!-- 7. Left Knee (RISK - ACUTE FLEXION) -->
+            <circle id="node-l-knee" cx="65" cy="270" r="11" fill="#ef4444" fill-opacity="0.3" stroke="#ef4444" stroke-width="3" class="animate-pulse cursor-pointer" />
+            <circle cx="65" cy="270" r="5" fill="#ef4444" />
+            <text x="38" y="273" text-anchor="middle" fill="#ef4444" font-size="8" font-weight="extrabold">82° RISK</text>
+
+            <!-- 8. Right Knee -->
+            <circle id="node-r-knee" cx="135" cy="270" r="7" fill="#10b981" stroke="#ffffff" stroke-width="2" />
+
+            <!-- 9. Feet Pressure Indicators (68% Left vs 32% Right) -->
+            <rect x="42" y="340" width="26" height="12" rx="4" fill="#ef4444" fill-opacity="0.3" stroke="#ef4444" stroke-width="1.5" />
+            <text x="55" y="349" text-anchor="middle" fill="#f87171" font-size="7" font-weight="black">68% L</text>
+
+            <rect x="132" y="340" width="26" height="12" rx="4" fill="#10b981" fill-opacity="0.2" stroke="#10b981" stroke-width="1.5" />
+            <text x="145" y="349" text-anchor="middle" fill="#34d399" font-size="7" font-weight="black">32% R</text>
+          </svg>
+        </div>
+
+        <div class="w-full bg-slate-950 p-3 rounded-2xl border border-slate-800 text-[11px] text-slate-400 space-y-1">
+          <span class="font-bold text-slate-200 block">💡 Joint Strain Legend:</span>
+          <p>Click any joint node to inspect isolated angular acceleration & force vectors.</p>
+        </div>
+      </div>
+
+      <!-- Right Column: Video MediaPipe Skeleton Preview & Table of Measurements -->
+      <div class="lg:col-span-7 space-y-6">
+
+        <!-- Video Player with Skeleton Tracking -->
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
+              <span>📹</span> MediaPipe Pose Live Skeleton
+            </h3>
+            <span class="text-[10px] text-emerald-400 font-mono font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+              POSE_LANDMARKS: 33/33 ACTIVE
+            </span>
+          </div>
+
+          <div class="relative w-full h-56 sm:h-64 rounded-2xl overflow-hidden bg-black border border-slate-800 flex items-center justify-center">
+            <video id="match-pose-video" class="w-full h-full object-cover" controls autoplay loop muted poster="https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=800&auto=format&fit=crop&q=80">
+              <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" type="video/mp4">
+            </video>
+            
+            <!-- Simulated Skeleton Overlay Badge -->
+            <div class="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700/80 text-[10px] text-slate-200 font-mono font-bold flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span>Pose Tracking Active</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Biomechanical Measurements Table -->
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
+              <span>📊</span> Stroke Measurement vs Ideal Ranges
+            </h3>
+            <span class="text-[10px] text-slate-400">Stroke: Jump Smash & Lunges</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                  <th class="pb-2.5">Biomechanical Metric</th>
+                  <th class="pb-2.5">Actual Value</th>
+                  <th class="pb-2.5">Ideal Range</th>
+                  <th class="pb-2.5">Deviation</th>
+                  <th class="pb-2.5 text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody id="measurements-tbody" class="divide-y divide-slate-800/60 text-slate-200">
+                <!-- Populated dynamically via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Injury Risk Alert Cards (Red High Visibility) -->
+    <div class="space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-black text-white flex items-center gap-2">
+          <span>🚨</span> Biomechanical Injury Risk Alerts
+        </h2>
+        <span class="text-xs text-rose-400 font-bold">2 Critical / High Warnings</span>
+      </div>
+
+      <div id="injury-alerts-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Alert 1: Elbow Hyperextension -->
+        <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-rose-950/40 border border-rose-500/40 rounded-2xl p-5 shadow-xl space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-400 text-[10px] font-black uppercase border border-rose-500/40">
+              CRITICAL RISK
+            </span>
+            <span class="text-xs text-slate-400 font-mono font-bold">Elbow Angle: 176°</span>
+          </div>
+          <div>
+            <h3 class="text-sm font-extrabold text-white flex items-center gap-1.5">
+              <span>⚠️</span> Elbow Joint Hyperextension Detected
+            </h3>
+            <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+              Elbow extension of <strong>176°</strong> at shuttle contact exceeds the safe range (150°–170°). Rapid repetitive hyperextension during jump smashes creates severe micro-trauma across the medial epicondyle and triceps tendon.
+            </p>
+          </div>
+          <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 text-[11px] text-emerald-400 font-medium">
+            <strong>Mitigation:</strong> Triceps eccentric slow-release band extensions (3x12) & forearm pronator strengthening.
+          </div>
+        </div>
+
+        <!-- Alert 2: Acute Knee Lunge Flexion -->
+        <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-rose-950/40 border border-rose-500/40 rounded-2xl p-5 shadow-xl space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-400 text-[10px] font-black uppercase border border-rose-500/40">
+              CRITICAL RISK
+            </span>
+            <span class="text-xs text-slate-400 font-mono font-bold">Knee Angle: 82°</span>
+          </div>
+          <div>
+            <h3 class="text-sm font-extrabold text-white flex items-center gap-1.5">
+              <span>⚠️</span> Acute Knee Lunge Flexion Angle
+            </h3>
+            <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+              Lead knee flexion angle of <strong>82°</strong> during deep front court recovery is too acute (ideal: 90°–110°). This shifts extreme deceleration torque directly onto the patellar tendon and ACL.
+            </p>
+          </div>
+          <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 text-[11px] text-emerald-400 font-medium">
+            <strong>Mitigation:</strong> Vastus Medialis Obliquus (VMO) isometric wall sits (4x30s) & deceleration lunge holds.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recommended Corrective Exercises Grid -->
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div>
+          <h2 class="text-base font-extrabold text-white flex items-center gap-2">
+            <span>🏋️‍♂️</span> Recommended Corrective & Biomechanical Drills
+          </h2>
+          <p class="text-xs text-slate-400">Targeted exercises to fix posture deviations and prevent injury</p>
+        </div>
+        <span class="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-extrabold border border-emerald-500/30">
+          Tailored Program
+        </span>
+      </div>
+
+      <div id="exercises-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Populated dynamically via JS -->
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      await fetchBiomechanicsData();
+
+      document.getElementById('reanalyze-btn').addEventListener('click', fetchBiomechanicsData);
+      document.getElementById('biomechanics-match-select').addEventListener('change', fetchBiomechanicsData);
+      document.getElementById('biomechanics-stroke-select').addEventListener('change', fetchBiomechanicsData);
+    });
+
+    async function fetchBiomechanicsData() {
+      const matchId = document.getElementById('biomechanics-match-select').value;
+      const strokeType = document.getElementById('biomechanics-stroke-select').value;
+      const reanalyzeBtn = document.getElementById('reanalyze-btn');
+
+      reanalyzeBtn.innerHTML = '<span>🔄 Running MediaPipe Pose Extraction...</span>';
+      reanalyzeBtn.disabled = true;
+
+      try {
+        const res = await fetch(`/api/biomechanics?matchId=${encodeURIComponent(matchId)}&strokeType=${encodeURIComponent(strokeType)}`);
+        if (res.ok) {
+          const data = await res.json();
+          renderPage(data);
+        }
+      } catch (err) {
+        console.error('Error fetching biomechanics data:', err);
+      } finally {
+        reanalyzeBtn.innerHTML = '<span>⚡ Re-Run MediaPipe Pose Extraction</span>';
+        reanalyzeBtn.disabled = false;
+      }
+    }
+
+    function renderPage(data) {
+      // 1. Overall Score
+      document.getElementById('overall-score-val').textContent = `${data.overall_score || 78} / 100`;
+
+      // 2. Measurements Table
+      const tbody = document.getElementById('measurements-tbody');
+      tbody.innerHTML = '';
+
+      (data.measurements || []).forEach(m => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-850/50 transition-colors';
+
+        let badgeClass = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
+        let badgeText = 'GOOD';
+        if (m.status === 'risk') {
+          badgeClass = 'bg-rose-500/15 text-rose-400 border-rose-500/30';
+          badgeText = 'RISK';
+        } else if (m.status === 'warning') {
+          badgeClass = 'bg-amber-500/15 text-amber-400 border-amber-500/30';
+          badgeText = 'WARNING';
+        }
+
+        tr.innerHTML = `
+          <td class="py-3 font-semibold text-white">
+            ${m.name}
+            <span class="block text-[10px] text-slate-400 font-normal">${m.notes || ''}</span>
+          </td>
+          <td class="py-3 font-bold text-slate-100">${m.actual_value}</td>
+          <td class="py-3 text-slate-400 font-mono">${m.ideal_range}</td>
+          <td class="py-3 font-mono font-bold ${m.status === 'risk' ? 'text-rose-400' : m.status === 'warning' ? 'text-amber-400' : 'text-emerald-400'}">${m.deviation}</td>
+          <td class="py-3 text-right">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black border ${badgeClass}">
+              ${badgeText}
+            </span>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // 3. Injury Risk Alerts
+      const alertsContainer = document.getElementById('injury-alerts-container');
+      alertsContainer.innerHTML = '';
+
+      (data.injury_risk_flags || []).forEach(flag => {
+        const card = document.createElement('div');
+        card.className = 'bg-gradient-to-br from-slate-900 via-slate-900 to-rose-950/40 border border-rose-500/40 rounded-2xl p-5 shadow-xl space-y-3';
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-400 text-[10px] font-black uppercase border border-rose-500/40">
+              ${flag.severity || 'HIGH RISK'}
+            </span>
+            <span class="text-xs text-slate-400 font-mono font-bold">Ideal: ${flag.ideal_range}</span>
+          </div>
+          <div>
+            <h3 class="text-sm font-extrabold text-white flex items-center gap-1.5">
+              <span>⚠️</span> ${flag.title}
+            </h3>
+            <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+              Measured: <strong class="text-rose-400">${flag.measured_value}</strong>. ${flag.description}
+            </p>
+          </div>
+          <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 text-[11px] text-emerald-400 font-medium">
+            <strong>Mitigation:</strong> ${flag.recommendation}
+          </div>
+        `;
+        alertsContainer.appendChild(card);
+      });
+
+      // 4. Corrective Exercises
+      const exGrid = document.getElementById('exercises-grid');
+      exGrid.innerHTML = '';
+
+      (data.corrective_exercises || []).forEach(ex => {
+        const card = document.createElement('div');
+        card.className = 'bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-2 flex flex-col justify-between hover:border-emerald-500/40 transition-colors';
+        card.innerHTML = `
+          <div class="space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="p-1.5 rounded-xl bg-emerald-500/20 text-emerald-400 text-lg">${ex.icon || '🏋️‍♂️'}</span>
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">${ex.target_issue}</span>
+            </div>
+            <h4 class="text-xs font-extrabold text-white">${ex.title}</h4>
+            <p class="text-[11px] text-slate-300 leading-relaxed">${ex.description}</p>
+          </div>
+          <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-emerald-400 font-mono font-bold">
+            <span>Dose</span>
+            <span>${ex.sets_reps}</span>
+          </div>
+        `;
+        exGrid.appendChild(card);
+      });
+    }
+  </script>
+</body>
+</html>

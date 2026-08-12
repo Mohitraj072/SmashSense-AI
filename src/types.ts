@@ -1,8 +1,11 @@
+export type SportType = 'Badminton' | 'Tennis' | 'Squash' | 'Table Tennis' | 'Pickleball';
+
 export interface User {
   id: string;
   name: string;
   email: string;
   avatar: string;
+  sport: SportType;
   level: 'Beginner' | 'Intermediate' | 'Advanced' | 'Professional';
   dominantHand: 'Right' | 'Left';
   playingStyle: 'Aggressive Attacker' | 'Defensive Counter-Attacker' | 'Control / Net Specialist' | 'All-Rounder';
@@ -39,18 +42,30 @@ export interface Exercise {
 
 export interface MatchAnalysis {
   id: string;
+  sport?: SportType;
   title: string;
   date: string;
   opponentName: string;
   opponentStyle: string;
   tournament: string;
-  category: 'Men\'s Singles' | 'Women\'s Singles' | 'Men\'s Doubles' | 'Women\'s Doubles' | 'Mixed Doubles';
+  category: 'Men\'s Singles' | 'Women\'s Singles' | 'Men\'s Doubles' | 'Women\'s Doubles' | 'Mixed Doubles' | string;
   durationMinutes: number;
   result: 'Win' | 'Loss';
   score: string;
   videoUrl?: string;
   thumbnailUrl?: string;
   aiSummary: string;
+  is_public?: boolean;
+  sportDetails?: Record<string, string>;
+
+  // Fitness Wearable Data Fields
+  avg_heart_rate?: number;
+  peak_heart_rate?: number;
+  calories?: number;
+  steps?: number;
+  active_minutes?: number;
+  fitness_score?: number;
+  fitness_analysis?: string;
 
   // Exact keys requested by coach prompt
   player_weaknesses: string[];
