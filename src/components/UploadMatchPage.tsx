@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MatchAnalysis } from '../types';
+import { saveMatchToSupabase } from '../lib/supabase';
 import {
   Upload,
   Video,
@@ -205,6 +206,13 @@ export const UploadMatchPage: React.FC<UploadMatchPageProps> = ({
               },
             ],
           };
+
+      // Persist full match analysis directly to Supabase table (Requirement 3 & 6)
+      try {
+        await saveMatchToSupabase(matchData);
+      } catch (sbErr) {
+        console.warn('Supabase upload persistence notice:', sbErr);
+      }
 
       setTimeout(() => {
         clearInterval(interval);

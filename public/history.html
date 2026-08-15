@@ -8,6 +8,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Supabase JS SDK CDN & SmashSense Database Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/supabase-client.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -145,23 +148,51 @@
     }
 
     async function fetchMatches() {
+      const container = document.getElementById('match-cards-container');
+      if (container) {
+        container.innerHTML = `
+          <div class="bg-[#111827] border border-[#1F2937] rounded-2xl p-12 text-center space-y-3">
+            <div class="w-10 h-10 border-2 border-[#00C853] border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p class="text-xs text-[#9CA3AF] font-mono">Fetching matches from Supabase database...</p>
+          </div>
+        `;
+      }
+
       try {
-        let response = await fetch('/matches');
-        if (!response.ok) {
-          response = await fetch('/api/matches');
-        }
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch matches');
+        // Requirement 4: Fetch all matches from Supabase instead of showing dummy data
+        if (typeof fetchMatchesFromSupabase === 'function') {
+          const supabaseMatches = await fetchMatchesFromSupabase();
+          if (supabaseMatches && Array.isArray(supabaseMatches) && supabaseMatches.length > 0) {
+            allMatches = supabaseMatches;
+            applyFiltersAndRender();
+            return;
+          }
         }
 
-        allMatches = await response.json();
+        let response = await fetch('/api/matches');
+        if (!response.ok) {
+          response = await fetch('/matches');
+        }
+        
+        if (response.ok) {
+          allMatches = await response.json();
+        } else {
+          allMatches = [];
+        }
         applyFiltersAndRender();
       } catch (error) {
         console.error('Error fetching matches:', error);
+        if (typeof fetchMatchesFromSupabase === 'function') {
+          const cached = await fetchMatchesFromSupabase();
+          if (cached && cached.length > 0) {
+            allMatches = cached;
+            applyFiltersAndRender();
+            return;
+          }
+        }
         document.getElementById('match-cards-container').innerHTML = `
           <div class="bg-[#111827] border border-[#FF6B35]/40 rounded-2xl p-8 text-center text-[#FF6B35]">
-            Failed to load match records. Please refresh the page.
+            Failed to load match records from Supabase. Please check connection.
           </div>
         `;
       }

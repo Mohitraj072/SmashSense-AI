@@ -42,6 +42,9 @@ export interface Exercise {
 
 export interface MatchAnalysis {
   id: string;
+  userId?: string;
+  user_id?: string;
+  points?: string;
   sport?: SportType;
   title: string;
   date: string;

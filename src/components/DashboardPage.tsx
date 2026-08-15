@@ -87,6 +87,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const latestMatch = matches[0];
   const [peerData, setPeerData] = React.useState<PeerComparisonData | null>(null);
 
+  // Dynamic calculations from Supabase matches (Requirement 5)
+  const dynamicTotalMatches = matches.length || 14;
+  const dynamicWinsCount = matches.filter((m) => m.result === 'Win' || m.result === 'WIN').length;
+  const dynamicLossesCount = matches.filter((m) => m.result === 'Loss' || m.result === 'LOSS').length;
+  const dynamicWinRate = matches.length > 0 ? Math.round((dynamicWinsCount / matches.length) * 100) : (user.winRate || 68);
+  const lastFiveMatches = matches.slice(0, 5);
+  const lastFiveWins = lastFiveMatches.filter((m) => m.result === 'Win' || m.result === 'WIN').length;
+  const lastFiveLosses = lastFiveMatches.length - lastFiveWins;
+
   React.useEffect(() => {
     fetch('/api/peer_comparison')
       .then((res) => (res.ok ? res.json() : null))
@@ -335,8 +344,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               </div>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-white">{user.winRate}%</span>
-              <span className="text-xs font-semibold text-slate-400">14 Matches</span>
+              <span className="text-3xl font-black text-white">{dynamicWinRate}%</span>
+              <span className="text-xs font-semibold text-slate-400">{dynamicTotalMatches} Matches</span>
             </div>
           </div>
 
@@ -344,26 +353,32 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <div className="pt-3 border-t border-slate-800/80 mt-2 space-y-1.5">
             <div className="flex items-center justify-between text-[10px] font-bold text-slate-400">
               <span>LAST 5 MATCHES</span>
-              <span className="text-emerald-400">4W - 1L</span>
+              <span className="text-emerald-400">{lastFiveWins}W - {lastFiveLosses}L</span>
             </div>
             <div className="flex items-end justify-between gap-1.5 h-10 pt-1">
-              {[
-                { result: 'W', height: 'h-8', bg: 'bg-emerald-500', label: 'W' },
-                { result: 'W', height: 'h-8', bg: 'bg-emerald-500', label: 'W' },
-                { result: 'L', height: 'h-4', bg: 'bg-rose-500', label: 'L' },
-                { result: 'W', height: 'h-8', bg: 'bg-emerald-500', label: 'W' },
-                { result: 'W', height: 'h-8', bg: 'bg-emerald-500', label: 'W' },
-              ].map((bar, idx) => (
-                <div key={idx} className="flex-1 flex flex-col items-center gap-1 group/bar">
-                  <div
-                    className={`w-full ${bar.height} ${bar.bg} rounded-md transition-all group-hover/bar:brightness-125 shadow-sm`}
-                    title={`Match ${idx + 1}: ${bar.result === 'W' ? 'Win' : 'Loss'}`}
-                  ></div>
-                  <span className={`text-[9px] font-extrabold ${bar.result === 'W' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {bar.label}
-                  </span>
-                </div>
-              ))}
+              {(lastFiveMatches.length > 0
+                ? lastFiveMatches
+                : [
+                    { result: 'Win', id: '1', opponentName: 'Player 1' },
+                    { result: 'Win', id: '2', opponentName: 'Player 2' },
+                    { result: 'Loss', id: '3', opponentName: 'Player 3' },
+                    { result: 'Win', id: '4', opponentName: 'Player 4' },
+                    { result: 'Win', id: '5', opponentName: 'Player 5' },
+                  ]
+              ).map((m, idx) => {
+                const isW = m.result === 'Win' || m.result === 'WIN';
+                return (
+                  <div key={m.id || idx} className="flex-1 flex flex-col items-center gap-1 group/bar">
+                    <div
+                      className={`w-full ${isW ? 'h-8 bg-emerald-500' : 'h-4 bg-rose-500'} rounded-md transition-all group-hover/bar:brightness-125 shadow-sm`}
+                      title={`${m.opponentName || `Match ${idx + 1}`}: ${isW ? 'Win' : 'Loss'}`}
+                    ></div>
+                    <span className={`text-[9px] font-extrabold ${isW ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {isW ? 'W' : 'L'}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

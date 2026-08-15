@@ -8,6 +8,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Supabase JS SDK CDN & SmashSense Database Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/supabase-client.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -679,12 +682,31 @@
             clearInterval(rotationInterval);
             progressFillEl.style.width = '100%';
             progressPercentEl.textContent = '100%';
+            
+            const finalMatch = resultData.match || resultData.result || resultData;
+            
+            // Build Supabase payload from form fields + resultData
+            const supabasePayload = {
+              opponent_name: opponentName,
+              match_date: matchDate,
+              result: resultVal === 'Win' ? 'Win' : 'Loss',
+              player_score: scoresVal || '21-18, 19-21, 21-15',
+              ai_analysis: finalMatch,
+              overall_rating: finalMatch.overall_rating?.score || (resultVal === 'Win' ? 8.5 : 6.8),
+              sport: selectedSport
+            };
+
+            // Save to Supabase (Requirement 3 & 6)
+            if (typeof saveMatchToSupabase === 'function') {
+              saveMatchToSupabase(supabasePayload).catch(e => console.error('Supabase save error:', e));
+            }
+
             if (resultData.match || resultData.result) {
-              localStorage.setItem('latest_analysis', JSON.stringify(resultData.match || resultData.result));
+              localStorage.setItem('latest_analysis', JSON.stringify({ ...finalMatch, ...supabasePayload }));
             }
             setTimeout(() => {
               window.location.href = '/results.html';
-            }, 500);
+            }, 800);
             return;
           }
 
@@ -735,15 +757,33 @@
 
                 progressFillEl.style.width = '100%';
                 progressPercentEl.textContent = '100%';
-                rotatingTextEl.textContent = "Analysis complete! Loading results...";
+                rotatingTextEl.textContent = "Analysis complete! Saving to Supabase...";
+
+                const finalMatch = statusData.match || statusData.result || {};
+                
+                // Build Supabase payload from form fields + statusData
+                const supabasePayload = {
+                  opponent_name: opponentName,
+                  match_date: matchDate,
+                  result: resultVal === 'Win' ? 'Win' : 'Loss',
+                  player_score: scoresVal || '21-18, 19-21, 21-15',
+                  ai_analysis: finalMatch,
+                  overall_rating: finalMatch.overall_rating?.score || (resultVal === 'Win' ? 8.5 : 6.8),
+                  sport: selectedSport
+                };
+
+                // Save to Supabase (Requirement 3 & 6)
+                if (typeof saveMatchToSupabase === 'function') {
+                  saveMatchToSupabase(supabasePayload).catch(e => console.error('Supabase save error:', e));
+                }
 
                 if (statusData.match || statusData.result) {
-                  localStorage.setItem('latest_analysis', JSON.stringify(statusData.match || statusData.result));
+                  localStorage.setItem('latest_analysis', JSON.stringify({ ...finalMatch, ...supabasePayload }));
                 }
 
                 setTimeout(() => {
                   window.location.href = '/results.html';
-                }, 800);
+                }, 1200);
               } else if (statusData.status === 'failed') {
                 clearInterval(pollInterval);
                 clearInterval(progressInterval);

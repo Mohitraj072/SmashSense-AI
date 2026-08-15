@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MatchAnalysis, User } from './types';
 import { INITIAL_MATCHES, INITIAL_USER } from './mockData';
+import { fetchMatchesFromSupabase, saveMatchToSupabase } from './lib/supabase';
 import { Navbar } from './components/Navbar';
 import { BottomNav } from './components/BottomNav';
 import { LoginPage } from './components/LoginPage';
@@ -16,16 +17,27 @@ export default function App() {
   const [matches, setMatches] = useState<MatchAnalysis[]>(INITIAL_MATCHES);
   const [selectedMatch, setSelectedMatch] = useState<MatchAnalysis | null>(null);
 
-  // Load matches & user data from backend API
+  // Load real matches from Supabase database (Requirement 4 & 5)
   useEffect(() => {
-    fetch('/api/matches')
-      .then((res) => (res.ok ? res.json() : null))
+    fetchMatchesFromSupabase()
       .then((data) => {
         if (data && Array.isArray(data) && data.length > 0) {
           setMatches(data);
+        } else {
+          // Fallback to server API /matches
+          fetch('/api/matches')
+            .then((res) => (res.ok ? res.json() : null))
+            .then((serverData) => {
+              if (serverData && Array.isArray(serverData) && serverData.length > 0) {
+                setMatches(serverData);
+              }
+            })
+            .catch((err) => console.log('Using local initial matches fallback', err));
         }
       })
-      .catch((err) => console.log('Using local initial matches fallback', err));
+      .catch((err) => {
+        console.warn('Supabase fetch notice:', err);
+      });
 
     fetch('/api/user')
       .then((res) => (res.ok ? res.json() : null))
@@ -48,10 +60,20 @@ export default function App() {
     setCurrentPage('login');
   };
 
-  const handleMatchAnalyzed = (newMatch: MatchAnalysis) => {
+  const handleMatchAnalyzed = async (newMatch: MatchAnalysis) => {
     setMatches((prev) => [newMatch, ...prev]);
     setSelectedMatch(newMatch);
     setCurrentPage('history');
+
+    // Save to Supabase (Requirement 3 & 6)
+    try {
+      await saveMatchToSupabase(newMatch);
+      if (typeof (window as any).showSupabaseToast === 'function') {
+        (window as any).showSupabaseToast('Match analysis saved to Supabase database successfully! ⚡', true);
+      }
+    } catch (err) {
+      console.warn('Supabase auto-save notice:', err);
+    }
   };
 
   const handleDeleteMatch = (id: string) => {

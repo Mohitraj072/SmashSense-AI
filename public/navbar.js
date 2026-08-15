@@ -21,6 +21,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     targetContainer.innerHTML = htmlContent;
 
+    // Load Supabase JS SDK CDN if not present
+    if (!document.querySelector('script[src*="supabase-js"]')) {
+      const sbCdn = document.createElement('script');
+      sbCdn.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+      document.head.appendChild(sbCdn);
+    }
+
+    // Load supabase-client.js if not present
+    if (!document.querySelector('script[src*="supabase-client.js"]')) {
+      const sbClient = document.createElement('script');
+      sbClient.src = '/supabase-client.js';
+      document.head.appendChild(sbClient);
+    }
+
     // Re-execute scripts contained inside navbar.html
     const scripts = targetContainer.querySelectorAll('script');
     scripts.forEach(oldScript => {

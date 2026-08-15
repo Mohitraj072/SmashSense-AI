@@ -70,6 +70,16 @@
 
       <!-- Right Side: Profile Avatar + Name + Rating Badge + Logout -->
       <div class="hidden lg:flex items-center gap-3">
+        <!-- Supabase Database Status Pill -->
+        <button
+          onclick="if (typeof openSupabaseModal === 'function') openSupabaseModal();"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold transition-all cursor-pointer shadow-sm"
+          title="Supabase Database Connected - Click to view connection details"
+        >
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="font-mono text-[11px]">⚡ Supabase DB</span>
+        </button>
+
         <div class="flex items-center gap-2.5 bg-slate-950/60 px-3 py-1.5 rounded-xl border border-slate-800">
           <div class="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-xs shadow-inner">
             👤

@@ -1,6 +1,6 @@
 {
   "name": "SmashSense.AI — Multi-Sport Edition",
-  "description": "AI-powered multi-racket sport match video analysis platform for Badminton, Tennis, Squash, Table Tennis, and Pickleball.",
+  "description": "AI-powered multi-racket sport match video analysis platform with Supabase database persistence for match records, live analytics, and performance tracking.",
   "requestFramePermissions": [
     "camera"
   ],
