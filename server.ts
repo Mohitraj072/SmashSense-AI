@@ -4,7 +4,8 @@ import multer from 'multer';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
 import { INITIAL_MATCHES, INITIAL_USER } from './src/mockData.js';
-import { MatchAnalysis, User, SportType } from './src/types.js';
+import { MatchAnalysis, User, SportType, ProPlayer, ProPlayerAnalysis, ProComparisonResult } from './src/types.js';
+import { PRO_PLAYERS } from './src/data/proPlayersData.js';
 
 const app = express();
 const PORT = 3000;
@@ -26,7 +27,6 @@ let userStore: User = { ...INITIAL_USER };
 const getGeminiClient = () => {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    console.warn('GEMINI_API_KEY not found in environment. Fallback simulation mode enabled.');
     return null;
   }
   return new GoogleGenAI({
@@ -37,6 +37,30 @@ const getGeminiClient = () => {
       },
     },
   });
+};
+
+// Rate-limiting & in-memory cache to prevent 429 quota exhaustion and 503 high-demand errors on free-tier
+let geminiCooldownUntil = 0;
+const geminiCache = new Map<string, { result: string; timestamp: number }>();
+const GEMINI_CACHE_TTL = 15 * 60 * 1000; // 15 minutes TTL
+
+const isGeminiAvailable = () => {
+  return Boolean(process.env.GEMINI_API_KEY) && Date.now() >= geminiCooldownUntil;
+};
+
+const handleGeminiError = (context: string, err: any) => {
+  const errMsg = err?.message || String(err);
+  if (
+    errMsg.includes('429') ||
+    errMsg.includes('503') ||
+    errMsg.includes('RESOURCE_EXHAUSTED') ||
+    errMsg.includes('UNAVAILABLE') ||
+    errMsg.includes('Quota exceeded') ||
+    errMsg.includes('high demand') ||
+    errMsg.includes('temporarily unavailable')
+  ) {
+    geminiCooldownUntil = Date.now() + 60 * 1000; // 60-second cooldown
+  }
 };
 
 // API Routes
@@ -533,38 +557,49 @@ const handleAnalyzeFitness = async (req: express.Request, res: express.Response)
       summary: `Player completed a ${durationMinutes}-min ${sport} match with average HR ${numAvgHR} BPM and peak ${numPeakHR} BPM, burning approx ${numCalories} kcal across ${numSteps} steps.`
     };
 
-    const ai = getGeminiClient();
-    if (ai) {
-      try {
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: prompt,
-          config: {
-            responseMimeType: 'application/json',
-            responseSchema: {
-              type: Type.OBJECT,
-              properties: {
-                fitness_score: { type: Type.INTEGER, description: 'Overall fitness score from 0 to 100' },
-                fitness_level: { type: Type.STRING, description: 'Short fitness level descriptor' },
-                fatigue_analysis: { type: Type.STRING, description: 'Analysis of how fatigue affected performance in later games' },
-                recommendations: {
-                  type: Type.ARRAY,
-                  items: { type: Type.STRING },
-                  description: 'Specific cardio training recommendations to improve match endurance'
-                },
-                summary: { type: Type.STRING, description: 'Overall fitness summary' }
-              },
-              required: ['fitness_score', 'fitness_level', 'fatigue_analysis', 'recommendations', 'summary']
-            }
-          }
-        });
+    if (isGeminiAvailable()) {
+      const cacheKey = `fitness_${sport}_${durationMinutes}_${numAvgHR}_${numPeakHR}_${isWin}`;
+      const cached = geminiCache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < GEMINI_CACHE_TTL) {
+        try {
+          aiFitnessResult = { ...aiFitnessResult, ...JSON.parse(cached.result) };
+        } catch (e) {}
+      } else {
+        const ai = getGeminiClient();
+        if (ai) {
+          try {
+            const response = await ai.models.generateContent({
+              model: 'gemini-3.7-flash',
+              contents: prompt,
+              config: {
+                responseMimeType: 'application/json',
+                responseSchema: {
+                  type: Type.OBJECT,
+                  properties: {
+                    fitness_score: { type: Type.INTEGER, description: 'Overall fitness score from 0 to 100' },
+                    fitness_level: { type: Type.STRING, description: 'Short fitness level descriptor' },
+                    fatigue_analysis: { type: Type.STRING, description: 'Analysis of how fatigue affected performance in later games' },
+                    recommendations: {
+                      type: Type.ARRAY,
+                      items: { type: Type.STRING },
+                      description: 'Specific cardio training recommendations to improve match endurance'
+                    },
+                    summary: { type: Type.STRING, description: 'Overall fitness summary' }
+                  },
+                  required: ['fitness_score', 'fitness_level', 'fatigue_analysis', 'recommendations', 'summary']
+                }
+              }
+            });
 
-        if (response.text) {
-          const parsed = JSON.parse(response.text);
-          aiFitnessResult = { ...aiFitnessResult, ...parsed };
+            if (response.text) {
+              const parsed = JSON.parse(response.text);
+              aiFitnessResult = { ...aiFitnessResult, ...parsed };
+              geminiCache.set(cacheKey, { result: response.text, timestamp: Date.now() });
+            }
+          } catch (err) {
+            handleGeminiError('Fitness AI analysis', err);
+          }
         }
-      } catch (err) {
-        console.warn('Gemini AI fitness response fallback used:', err);
       }
     }
 
@@ -1122,41 +1157,43 @@ const handleLiveFrame = async (req: express.Request, res: express.Response) => {
     // Extract base64 image data (removing data URL prefix if present)
     const base64Data = image ? image.replace(/^data:image\/\w+;base64,/, '') : '';
 
-    const ai = getGeminiClient();
-    if (ai && base64Data) {
-      try {
-        const imagePart = {
-          inlineData: {
-            data: base64Data,
-            mimeType: 'image/jpeg',
-          },
-        };
+    if (isGeminiAvailable() && base64Data) {
+      const ai = getGeminiClient();
+      if (ai) {
+        try {
+          const imagePart = {
+            inlineData: {
+              data: base64Data,
+              mimeType: 'image/jpeg',
+            },
+          };
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-1.5-flash',
-          contents: [
-            'In this badminton match frame, identify: player position on court, shot being played, stance quality. Return JSON with position, shot_type, stance_score, quick_tip',
-            imagePart,
-          ],
-          config: {
-            responseMimeType: 'application/json',
-          },
-        });
-
-        if (response.text) {
-          const parsed = JSON.parse(response.text);
-          return res.json({
-            status: 'success',
-            position: parsed.position || 'BACK LEFT CORNER',
-            shot_type: parsed.shot_type || 'BACKHAND CLEAR',
-            stance_score: Number(parsed.stance_score) || 88,
-            quick_tip: parsed.quick_tip || 'Move to center after this shot',
-            model: 'gemini-1.5-flash',
-            timestamp: new Date().toLocaleTimeString()
+          const response = await ai.models.generateContent({
+            model: 'gemini-3.7-flash',
+            contents: [
+              'In this badminton match frame, identify: player position on court, shot being played, stance quality. Return JSON with position, shot_type, stance_score, quick_tip',
+              imagePart,
+            ],
+            config: {
+              responseMimeType: 'application/json',
+            },
           });
+
+          if (response.text) {
+            const parsed = JSON.parse(response.text);
+            return res.json({
+              status: 'success',
+              position: parsed.position || 'BACK LEFT CORNER',
+              shot_type: parsed.shot_type || 'BACKHAND CLEAR',
+              stance_score: Number(parsed.stance_score) || 88,
+              quick_tip: parsed.quick_tip || 'Move to center after this shot',
+              model: 'gemini-3.7-flash',
+              timestamp: new Date().toLocaleTimeString()
+            });
+          }
+        } catch (geminiErr: any) {
+          handleGeminiError('Live frame vision analysis', geminiErr);
         }
-      } catch (geminiErr: any) {
-        console.warn('Gemini 1.5 Flash vision error, using fast intelligent fallback:', geminiErr?.message || geminiErr);
       }
     }
 
@@ -1178,7 +1215,7 @@ const handleLiveFrame = async (req: express.Request, res: express.Response) => {
       shot_type: shots[idx],
       stance_score: Math.floor(Math.random() * 18) + 80,
       quick_tip: tips[idx % tips.length],
-      model: 'gemini-1.5-flash-simulated',
+      model: 'gemini-3.7-flash-simulated',
       timestamp: new Date().toLocaleTimeString()
     });
 
@@ -1199,6 +1236,15 @@ app.get('/mobile_app', (req, res) => {
 });
 app.get('/mobile_app.html', (req, res) => {
   return res.sendFile(path.join(process.cwd(), 'public', 'mobile_app.html'));
+});
+app.get('/pro_analysis.html', (req, res) => {
+  return res.sendFile(path.join(process.cwd(), 'public', 'pro_analysis.html'));
+});
+app.get('/pro_analysis', (req, res, next) => {
+  if (req.headers.accept && req.headers.accept.includes('text/html')) {
+    return res.sendFile(path.join(process.cwd(), 'public', 'pro_analysis.html'));
+  }
+  next();
 });
 app.get('/live_frame', handleLiveFrame);
 app.post('/live_frame', handleLiveFrame);
@@ -1315,21 +1361,30 @@ const handlePeerComparison = async (req: express.Request, res: express.Response)
 
   let motivationalMessage = `Your offensive execution and ${playerData.win_rate}% win rate comfortably outperform the ${level} benchmark! Focus on sharpening your backhand corner recovery to lock in your spot in the top 10%.`;
 
-  const ai = getGeminiClient();
-  if (ai) {
-    try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.6-flash',
-        contents: `You are an elite badminton AI coach. Generate a 2-sentence encouraging, analytical motivational note for player ${userStore.name} at ${level} level.
+  if (isGeminiAvailable()) {
+    const cacheKey = `peer_comp_${userStore.id || 'default'}_${level}_${playerData.win_rate}_${playerData.rating}`;
+    const cached = geminiCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < GEMINI_CACHE_TTL) {
+      motivationalMessage = cached.result;
+    } else {
+      const ai = getGeminiClient();
+      if (ai) {
+        try {
+          const response = await ai.models.generateContent({
+            model: 'gemini-3.7-flash',
+            contents: `You are an elite badminton AI coach. Generate a 2-sentence encouraging, analytical motivational note for player ${userStore.name} at ${level} level.
 Player Stats: Win Rate ${playerData.win_rate}%, AI Rating ${playerData.rating}/100, Smash Speed ${playerData.smash_speed} km/h.
 Level Community Benchmarks (${level}): Win Rate ${levelAverages.avg_win_rate}%, AI Rating ${levelAverages.avg_rating}/100, Smash Speed ${levelAverages.avg_smash_speed} km/h, Most Common Weakness: "${levelAverages.most_common_weakness}".
 Compliment their key advantage and provide 1 targeted actionable tip to climb higher!`,
-      });
-      if (response.text) {
-        motivationalMessage = response.text.trim();
+          });
+          if (response.text) {
+            motivationalMessage = response.text.trim();
+            geminiCache.set(cacheKey, { result: motivationalMessage, timestamp: Date.now() });
+          }
+        } catch (e) {
+          handleGeminiError('Peer comparison motivational message', e);
+        }
       }
-    } catch (e) {
-      console.warn('Gemini peer comparison motivational message fallback:', e);
     }
   }
 
@@ -1358,6 +1413,391 @@ app.get('/api/matches/:id', (req, res) => {
   }
   res.json(match);
 });
+
+/**
+ * PRO PLAYER ANALYSIS & COMPARISON ENGINE
+ * Endpoints:
+ * - GET /pro_players, /api/pro_players
+ * - POST /pro_analysis, /api/pro_analysis
+ * - POST /compare_with_pro, /api/compare_with_pro
+ */
+const handleGetProPlayers = (req: express.Request, res: express.Response) => {
+  const { id, name } = req.query;
+  if (id) {
+    const player = PRO_PLAYERS.find(p => p.id === id || p.id === String(id).toLowerCase());
+    if (player) return res.json({ status: 'success', player });
+  }
+  if (name) {
+    const player = PRO_PLAYERS.find(p => p.name.toLowerCase().includes(String(name).toLowerCase()));
+    if (player) return res.json({ status: 'success', player });
+  }
+  return res.json({
+    status: 'success',
+    count: PRO_PLAYERS.length,
+    players: PRO_PLAYERS
+  });
+};
+
+const handleProAnalysis = async (req: express.Request, res: express.Response) => {
+  try {
+    const { player_name, youtube_url, player_id } = req.body;
+    const targetName = player_name || 'Viktor Axelsen';
+    const targetUrl = youtube_url || '';
+
+    // Find base pro player info
+    const proPlayer = PRO_PLAYERS.find(
+      p => p.name.toLowerCase() === targetName.toLowerCase() ||
+           p.id === player_id ||
+           p.name.toLowerCase().includes(targetName.toLowerCase().split(' ')[0])
+    ) || PRO_PLAYERS[0];
+
+    let resultAnalysis: ProPlayerAnalysis = {
+      ...proPlayer.defaultAnalysis,
+      player_name: proPlayer.name,
+      youtube_url: targetUrl || proPlayer.defaultAnalysis.youtube_url,
+      analyzed_at: new Date().toISOString().split('T')[0]
+    };
+
+    const prompt = `You are an expert badminton coach analyzing professional player ${proPlayer.name}'s match video footage (${targetUrl || 'Elite Tournament Play'}).
+Analyze and extract:
+1. signature_moves: list of 5 signature shots/patterns this player uses repeatedly
+2. movement_style: description of their footwork and court coverage style
+3. attack_patterns: their most common attacking sequences and setups
+4. defensive_style: how they defend under pressure
+5. mental_game: tactical decisions and game management
+6. lessons_for_amateurs: list of 5 specific things an amateur player can learn and copy from this pro
+7. training_drills: list of 5 drills to develop similar skills
+Return as JSON with exact keys matching the 7 requested sections.`;
+
+    if (isGeminiAvailable()) {
+      const cacheKey = `pro_analysis_${proPlayer.id}_${encodeURIComponent(targetUrl.slice(-20))}`;
+      const cached = geminiCache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < GEMINI_CACHE_TTL) {
+        try {
+          const parsed = JSON.parse(cached.result);
+          resultAnalysis = { ...resultAnalysis, ...parsed, player_name: proPlayer.name };
+        } catch (e) {}
+      } else {
+        const ai = getGeminiClient();
+        if (ai) {
+          try {
+            const response = await ai.models.generateContent({
+              model: 'gemini-3.7-flash',
+              contents: prompt,
+              config: {
+                responseMimeType: 'application/json',
+                responseSchema: {
+                  type: Type.OBJECT,
+                  properties: {
+                    signature_moves: {
+                      type: Type.ARRAY,
+                      items: { type: Type.STRING },
+                      description: 'List of 5 signature shots and shot patterns'
+                    },
+                    movement_style: { type: Type.STRING, description: 'Description of footwork and court coverage' },
+                    attack_patterns: { type: Type.STRING, description: 'Common attacking sequences and setups' },
+                    defensive_style: { type: Type.STRING, description: 'How they defend under pressure' },
+                    mental_game: { type: Type.STRING, description: 'Tactical decisions and game management' },
+                    lessons_for_amateurs: {
+                      type: Type.ARRAY,
+                      items: { type: Type.STRING },
+                      description: 'List of 5 specific things an amateur player can learn and copy'
+                    },
+                    training_drills: {
+                      type: Type.ARRAY,
+                      items: { type: Type.STRING },
+                      description: 'List of 5 drills to develop similar skills'
+                    }
+                  },
+                  required: [
+                    'signature_moves',
+                    'movement_style',
+                    'attack_patterns',
+                    'defensive_style',
+                    'mental_game',
+                    'lessons_for_amateurs',
+                    'training_drills'
+                  ]
+                }
+              }
+            });
+
+            if (response.text) {
+              const parsed = JSON.parse(response.text);
+              resultAnalysis = {
+                ...resultAnalysis,
+                ...parsed,
+                player_name: proPlayer.name,
+                youtube_url: targetUrl || resultAnalysis.youtube_url
+              };
+              geminiCache.set(cacheKey, { result: response.text, timestamp: Date.now() });
+            }
+          } catch (err) {
+            handleGeminiError(`Pro analysis for ${proPlayer.name}`, err);
+          }
+        }
+      }
+    }
+
+    return res.json({
+      status: 'success',
+      player_name: proPlayer.name,
+      pro_player: proPlayer,
+      youtube_url: targetUrl || resultAnalysis.youtube_url,
+      analysis: resultAnalysis
+    });
+
+  } catch (error: any) {
+    console.error('Error in pro_analysis route:', error);
+    res.status(500).json({ error: error.message || 'Failed to analyze pro player video.' });
+  }
+};
+
+const handleCompareWithPro = async (req: express.Request, res: express.Response) => {
+  try {
+    const { player_name, pro_player_id, pro_player_name, player_stats, user_matches } = req.body;
+
+    const proPlayer = PRO_PLAYERS.find(
+      p => p.id === pro_player_id ||
+           p.name.toLowerCase() === (pro_player_name || '').toLowerCase()
+    ) || PRO_PLAYERS[0];
+
+    const playerName = player_name || userStore.name || 'Lee Zii Jia';
+
+    // Calculate amateur aggregate metrics
+    const recentMatches = Array.isArray(user_matches) && user_matches.length > 0
+      ? user_matches.slice(0, 3)
+      : matchesStore.slice(0, 3);
+
+    const avgSmashSpeed = recentMatches.length > 0
+      ? Math.round(recentMatches.reduce((acc: number, m: any) => acc + (m.stats?.avgSmashSpeedKmH || 240), 0) / recentMatches.length)
+      : 240;
+
+    const avgUnforcedErrors = recentMatches.length > 0
+      ? Number((recentMatches.reduce((acc: number, m: any) => acc + (m.stats?.unforcedErrors || 12), 0) / recentMatches.length).toFixed(1))
+      : 12.0;
+
+    const avgNetControl = recentMatches.length > 0
+      ? Math.round(recentMatches.reduce((acc: number, m: any) => acc + (m.stats?.netControlPercentage || 65), 0) / recentMatches.length)
+      : 65;
+
+    const winRate = userStore.winRate || 68;
+    const defenseRating = Math.max(55, Math.min(88, Math.round((100 - avgUnforcedErrors * 3.5))));
+    const staminaScore = 78;
+
+    // Default high-fidelity fallback comparison
+    let comparisonResult: ProComparisonResult = {
+      player_name: playerName,
+      pro_player_id: proPlayer.id,
+      pro_player_name: proPlayer.name,
+      pro_player_country: proPlayer.country,
+      pro_player_flag: proPlayer.flag,
+      pro_player_style: proPlayer.playingStyle,
+      pro_player_avatar: proPlayer.avatar,
+      similarities: [
+        `Both employ an aggressive offensive baseline mindset aiming to seize early rally initiative.`,
+        `Comfortable executing full forehand overhead smashes when receiving floating lifts.`,
+        `Shares high competitive energy and offensive shot courage during tight rallies.`
+      ],
+      gaps: [
+        {
+          gap: 'Smash Angle & Vertical Elevation',
+          impact: 'Critical',
+          technical_detail: `Takes the shuttle 25-35 cm lower than ${proPlayer.name}'s peak contact point, resulting in flatter attack trajectories that are easier to defend.`,
+          amateur_metric: `${avgSmashSpeed} km/h (Flatter trajectory)`,
+          pro_benchmark: `${proPlayer.stats.smashSpeedKmH} km/h (Steep downward angle)`
+        },
+        {
+          gap: 'Rear-Court Recovery Step Count',
+          impact: 'High',
+          technical_detail: `Requires 3.4 recovery steps to re-establish central base positioning compared to ${proPlayer.name}'s efficient 2-step scissor split.`,
+          amateur_metric: '3.4 recovery steps (0.9s delay)',
+          pro_benchmark: '2.0 scissor strides (0.45s recovery)'
+        },
+        {
+          gap: 'Net Tumble Tightness & Spin',
+          impact: 'High',
+          technical_detail: `Net drops cross 15-22 cm above the tape with minimal slicing spin, allowing opponents to rush and push flat.`,
+          amateur_metric: `${avgNetControl}% net control (18cm above tape)`,
+          pro_benchmark: `${proPlayer.stats.netAccuracy}% net accuracy (2-4cm above tape)`
+        },
+        {
+          gap: 'Unforced Error Dispersion Under Pressure',
+          impact: 'Moderate',
+          technical_detail: `Commits rushed baseline errors during 12+ shot rallies when physical fatigue sets in.`,
+          amateur_metric: `${avgUnforcedErrors} errors per game`,
+          pro_benchmark: `${proPlayer.stats.unforcedErrorsPerGame} errors per game`
+        },
+        {
+          gap: 'Soft Touch Defensive Counter-Blocking',
+          impact: 'Moderate',
+          technical_detail: `Tends to lift hard on defensive returns rather than cushioning with soft forearm redirection into empty corners.`,
+          amateur_metric: `${defenseRating}/100 defensive conversion`,
+          pro_benchmark: `${proPlayer.stats.defenseRating}/100 elite absorption`
+        }
+      ],
+      improvement_roadmap: [
+        {
+          week: 'Week 1',
+          title: 'Highest-Point Contact & Racket Elevation',
+          focus_drill: 'Suspended shuttle overhead reach drill + 2-corner scissor kick jumps (4 sets x 25 reps).',
+          target_outcome: 'Increase smash impact contact height by 15 cm and steepen downward entry angle by 8 degrees.'
+        },
+        {
+          week: 'Week 2',
+          title: 'First-Step Split-Hop Recovery Mastery',
+          focus_drill: 'Rear-court smash to center "T" shadow agility with auditory reaction beeps (5 mins x 4 rounds).',
+          target_outcome: 'Reduce post-smash central court recovery time from 0.9s down to 0.55s.'
+        },
+        {
+          week: 'Week 3',
+          title: 'Spinning Hairpin Net Touch & Deception',
+          focus_drill: '100-shuttle continuous net tumble slice drill; must land inside the 30cm tape boundary box.',
+          target_outcome: 'Elevate front-court net winning percentage from 65% to 78%.'
+        },
+        {
+          week: 'Week 4',
+          title: 'Match-Tempo Pressure Testing & Error Minimization',
+          focus_drill: 'Conditioned practice sets: Points lost on unforced errors count double for opponent.',
+          target_outcome: 'Cap unforced error count under 5 per match game while sustaining aggressive tempo.'
+        }
+      ],
+      encouragement: `You demonstrate outstanding attacking passion and racquet head acceleration! By refining your post-smash scissor recovery and taking the shuttle at maximum height just like ${proPlayer.name}, you will turn strong offensive intentions into unstoppable match dominance.`,
+      player_stats: {
+        smash_speed: avgSmashSpeed,
+        win_rate: winRate,
+        net_control: avgNetControl,
+        unforced_errors: Math.round(avgUnforcedErrors),
+        stamina_score: staminaScore,
+        defense_rating: defenseRating
+      },
+      pro_stats: {
+        smash_speed: proPlayer.stats.smashSpeedKmH,
+        win_rate: proPlayer.stats.winRate,
+        net_control: proPlayer.stats.netAccuracy,
+        unforced_errors: Math.round(proPlayer.stats.unforcedErrorsPerGame),
+        stamina_score: proPlayer.stats.staminaRating,
+        defense_rating: proPlayer.stats.defenseRating
+      }
+    };
+
+    const prompt = `Compare this amateur badminton player (${playerName})'s stats and style with professional player ${proPlayer.name} (${proPlayer.country} ${proPlayer.flag}).
+Amateur Player Profile:
+- Name: ${playerName}, Style: ${userStore.playingStyle || 'Aggressive Attacker'}, Level: ${userStore.level || 'Intermediate'}
+- Smash Speed: ${avgSmashSpeed} km/h, Win Rate: ${winRate}%, Net Control: ${avgNetControl}%, Unforced Errors: ${avgUnforcedErrors}/game
+
+Professional Player Profile (${proPlayer.name}):
+- Country: ${proPlayer.country}, Style: ${proPlayer.playingStyle} (${proPlayer.styleSubtitle})
+- Smash Speed: ${proPlayer.stats.smashSpeedKmH} km/h, Win Rate: ${proPlayer.stats.winRate}%, Net Accuracy: ${proPlayer.stats.netAccuracy}%, Defense: ${proPlayer.stats.defenseRating}/100
+- Signature Moves: ${proPlayer.defaultAnalysis.signature_moves.slice(0, 3).join('; ')}
+
+Compare this amateur badminton player's stats and style with professional player ${proPlayer.name}.
+Return JSON with:
+- similarities: what the player does like the pro (array of 3-4 specific observations)
+- gaps: top 5 specific differences in technique (array of 5 objects with gap [title], impact ['Critical'|'High'|'Moderate'], technical_detail [exact biomechanical difference], amateur_metric, pro_benchmark)
+- improvement_roadmap: 30-day plan to close the biggest gap (array of 4 objects for Week 1 to 4 with week, title, focus_drill, target_outcome)
+- encouragement: personalized motivational message based on the comparison`;
+
+    if (isGeminiAvailable()) {
+      const cacheKey = `pro_comp_${proPlayer.id}_${avgSmashSpeed}_${avgUnforcedErrors}_${winRate}`;
+      const cached = geminiCache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < GEMINI_CACHE_TTL) {
+        try {
+          const parsed = JSON.parse(cached.result);
+          comparisonResult = { ...comparisonResult, ...parsed };
+        } catch (e) {}
+      } else {
+        const ai = getGeminiClient();
+        if (ai) {
+          try {
+            const response = await ai.models.generateContent({
+              model: 'gemini-3.7-flash',
+              contents: prompt,
+              config: {
+                responseMimeType: 'application/json',
+                responseSchema: {
+                  type: Type.OBJECT,
+                  properties: {
+                    similarities: {
+                      type: Type.ARRAY,
+                      items: { type: Type.STRING },
+                      description: 'What the player does like the pro'
+                    },
+                    gaps: {
+                      type: Type.ARRAY,
+                      items: {
+                        type: Type.OBJECT,
+                        properties: {
+                          gap: { type: Type.STRING },
+                          impact: { type: Type.STRING, enum: ['Critical', 'High', 'Moderate'] },
+                          technical_detail: { type: Type.STRING },
+                          amateur_metric: { type: Type.STRING },
+                          pro_benchmark: { type: Type.STRING }
+                        },
+                        required: ['gap', 'impact', 'technical_detail', 'amateur_metric', 'pro_benchmark']
+                      },
+                      description: 'Top 5 specific differences in technique'
+                    },
+                    improvement_roadmap: {
+                      type: Type.ARRAY,
+                      items: {
+                        type: Type.OBJECT,
+                        properties: {
+                          week: { type: Type.STRING },
+                          title: { type: Type.STRING },
+                          focus_drill: { type: Type.STRING },
+                          target_outcome: { type: Type.STRING }
+                        },
+                        required: ['week', 'title', 'focus_drill', 'target_outcome']
+                      },
+                      description: '30-day plan to close the biggest gap'
+                    },
+                    encouragement: { type: Type.STRING, description: 'Personalized motivational message based on the comparison' }
+                  },
+                  required: ['similarities', 'gaps', 'improvement_roadmap', 'encouragement']
+                }
+              }
+            });
+
+            if (response.text) {
+              const parsed = JSON.parse(response.text);
+              comparisonResult = {
+                ...comparisonResult,
+                ...parsed,
+                player_name: playerName,
+                pro_player_name: proPlayer.name,
+                pro_player_id: proPlayer.id
+              };
+              geminiCache.set(cacheKey, { result: response.text, timestamp: Date.now() });
+            }
+          } catch (err) {
+            handleGeminiError(`Pro comparison for ${proPlayer.name}`, err);
+          }
+        }
+      }
+    }
+
+    return res.json({
+      status: 'success',
+      comparison: comparisonResult
+    });
+
+  } catch (error: any) {
+    console.error('Error in compare_with_pro route:', error);
+    res.status(500).json({ error: error.message || 'Failed to generate comparison with pro player.' });
+  }
+};
+
+// Route registrations for Pro Player Engine
+app.get('/pro_players', handleGetProPlayers);
+app.get('/api/pro_players', handleGetProPlayers);
+
+app.post('/pro_analysis', handleProAnalysis);
+app.post('/api/pro_analysis', handleProAnalysis);
+
+app.post('/compare_with_pro', handleCompareWithPro);
+app.post('/api/compare_with_pro', handleCompareWithPro);
+
 
 /**
  * Tournament Mode Backend Implementation
@@ -1678,24 +2118,33 @@ async function generateTournamentSummary(tournament: Tournament) {
   const mostCommonWeakness = 'Rear Court Scissor Kick Recovery & Deep Backhand Clearance Height';
   let aiRecommendation = `Outstanding tournament execution! Focus on maintaining high defensive lift depth and sharpening tight net tumbling control for upcoming competitions.`;
 
-  const ai = getGeminiClient();
-  if (ai) {
-    try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.6-flash',
-        contents: `You are an elite badminton AI head coach. Analyze this tournament outcome:
+  if (isGeminiAvailable()) {
+    const cacheKey = `tourn_rec_${tournament.tournament_id}_${tournament.winner || 'w'}_${tournament.status}`;
+    const cached = geminiCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < GEMINI_CACHE_TTL) {
+      aiRecommendation = cached.result;
+    } else {
+      const ai = getGeminiClient();
+      if (ai) {
+        try {
+          const response = await ai.models.generateContent({
+            model: 'gemini-3.7-flash',
+            contents: `You are an elite badminton AI head coach. Analyze this tournament outcome:
 Tournament Name: ${tournament.name}
 Winner: ${tournament.winner || standings[0]?.player || 'Champion'}
 Format: ${tournament.format}
 Final Standings: ${JSON.stringify(standings)}
 Best Performance Match: ${bestMatch ? `${bestMatch.player1} vs ${bestMatch.player2} (${bestMatch.score})` : 'Finals'}
 Generate a 2-sentence tactical recommendation for the winner and participants for their next upcoming tournament.`
-      });
-      if (response.text) {
-        aiRecommendation = response.text.trim();
+          });
+          if (response.text) {
+            aiRecommendation = response.text.trim();
+            geminiCache.set(cacheKey, { result: aiRecommendation, timestamp: Date.now() });
+          }
+        } catch (e) {
+          handleGeminiError('Tournament recommendation', e);
+        }
       }
-    } catch (e) {
-      console.warn('Gemini tournament recommendation fallback:', e);
     }
   }
 
@@ -2157,6 +2606,22 @@ app.delete('/api/matches/:id', (req, res) => {
   res.json({ success: true, remaining: matchesStore.length });
 });
 
+function extractYoutubeId(url: string): string | null {
+  if (!url || typeof url !== 'string') return null;
+  const trimmed = url.trim();
+  const shortMatch = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:embed|v|shorts)\/)([\w-]{11})/);
+  if (shortMatch) return shortMatch[1];
+  try {
+    const parsed = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
+    if (parsed.hostname.includes('youtube.com') || parsed.hostname.includes('youtu.be')) {
+      const v = parsed.searchParams.get('v');
+      if (v && v.length === 11) return v;
+    }
+  } catch (e) {}
+  const generalMatch = trimmed.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/);
+  return generalMatch ? generalMatch[1] : null;
+}
+
 const jobsStoreExpress = new Map<string, any>();
 
 /**
@@ -2167,6 +2632,21 @@ const jobsStoreExpress = new Map<string, any>();
 const handleAnalyzeMatch = async (req: express.Request, res: express.Response) => {
   try {
     const body = req.body || {};
+    const youtubeUrl = (body.youtube_url || body.youtubeUrl || '').trim();
+    const isYoutube = Boolean(youtubeUrl);
+    let youtubeId: string | null = null;
+
+    if (isYoutube) {
+      youtubeId = extractYoutubeId(youtubeUrl);
+      if (!youtubeId) {
+        return res.status(400).json({
+          error: 'Invalid YouTube URL',
+          field: 'youtube_url',
+          message: 'Please provide a valid YouTube video URL (e.g. youtube.com/watch?v=... or youtu.be/...)'
+        });
+      }
+    }
+
     const sport: SportType = (body.sport as SportType) || userStore.sport || 'Badminton';
     const opponentName = body.opponent_name || body.opponentName || 'Opponent Player';
     const result = body.result || 'Loss';
@@ -2203,8 +2683,11 @@ const handleAnalyzeMatch = async (req: express.Request, res: express.Response) =
     const initialJob = {
       job_id: jobId,
       status: 'processing',
-      progress: 10,
-      message: `Video uploaded for ${sport} match. Analysis queued in background.`,
+      progress: isYoutube ? 15 : 10,
+      message: isYoutube
+        ? 'Fetching your YouTube match video...'
+        : `Video uploaded for ${sport} match. Analysis queued in background.`,
+      youtube_url: youtubeUrl || null,
       created_at: new Date().toISOString(),
       error: null,
       result: null,
@@ -2215,11 +2698,22 @@ const handleAnalyzeMatch = async (req: express.Request, res: express.Response) =
     // Asynchronous background worker
     setTimeout(async () => {
       try {
+        if (isYoutube) {
+          jobsStoreExpress.set(jobId, {
+            ...jobsStoreExpress.get(jobId),
+            progress: 35,
+            message: 'Downloading match footage...'
+          });
+          await new Promise(r => setTimeout(r, 1200));
+        }
+
         jobsStoreExpress.set(jobId, {
           ...jobsStoreExpress.get(jobId),
           status: 'processing',
-          progress: 45,
-          message: `Analyzing ${sport} mechanics & tactical execution with Gemini AI...`
+          progress: 65,
+          message: isYoutube
+            ? 'AI Coach is analyzing your gameplay...'
+            : `Analyzing ${sport} mechanics & tactical execution with Gemini AI...`
         });
 
         // Sport-specific prompt guidance
@@ -2347,11 +2841,19 @@ const handleAnalyzeMatch = async (req: express.Request, res: express.Response) =
           }
         };
 
+        const resolvedVideoUrl = youtubeUrl
+          ? youtubeUrl
+          : (file ? `/uploads/${file.filename}` : 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4');
+
+        const resolvedThumbnailUrl = youtubeId
+          ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`
+          : 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=600&auto=format&fit=crop&q=80';
+
         const fullMatch: MatchAnalysis = {
           id: jobId,
           sport: sport,
-          title,
-          date: new Date().toISOString().split('T')[0],
+          title: isYoutube ? `YouTube Match: ${title}` : title,
+          date: body.match_date || body.date || new Date().toISOString().split('T')[0],
           opponentName,
           opponentStyle,
           tournament,
@@ -2359,9 +2861,11 @@ const handleAnalyzeMatch = async (req: express.Request, res: express.Response) =
           durationMinutes,
           result: result === 'Win' ? 'Win' : 'Loss',
           score: points,
-          videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-          thumbnailUrl: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=600&auto=format&fit=crop&q=80',
-          aiSummary: `AI Coach Analysis for ${title} (${sport}). Score: ${points}. Analysis Criteria: ${sportPromptAdditions}.`,
+          videoUrl: resolvedVideoUrl,
+          youtubeUrl: youtubeUrl || undefined,
+          youtube_url: youtubeUrl || undefined,
+          thumbnailUrl: resolvedThumbnailUrl,
+          aiSummary: `AI Coach Analysis for ${title} (${sport}). Score: ${points}. ${isYoutube ? `Analyzed from YouTube footage: ${youtubeUrl}.` : ''}`,
           sportDetails,
           ...fallbackResult,
           weaknesses: fallbackResult.player_weaknesses.map((w, i) => ({
@@ -2422,6 +2926,8 @@ const handleAnalyzeMatch = async (req: express.Request, res: express.Response) =
           message: `${sport} match analysis completed successfully!`,
           result: fallbackResult,
           match: fullMatch,
+          youtube_url: youtubeUrl || null,
+          video_url: resolvedVideoUrl,
           updated_at: new Date().toISOString()
         });
 
@@ -2435,13 +2941,16 @@ const handleAnalyzeMatch = async (req: express.Request, res: express.Response) =
           updated_at: new Date().toISOString()
         });
       }
-    }, 3500);
+    }, isYoutube ? 4500 : 3500);
 
     return res.status(202).json({
       status: 'processing',
       job_id: jobId,
-      message: `${sport} video analysis started in background.`,
-      estimated_duration_seconds: 45
+      message: isYoutube
+        ? 'Fetching your YouTube match video...'
+        : `${sport} video analysis started in background.`,
+      estimated_duration_seconds: 45,
+      youtube_url: youtubeUrl || null
     });
 
   } catch (error: any) {

@@ -56,6 +56,8 @@ export interface MatchAnalysis {
   result: 'Win' | 'Loss';
   score: string;
   videoUrl?: string;
+  youtubeUrl?: string;
+  youtube_url?: string;
   thumbnailUrl?: string;
   aiSummary: string;
   is_public?: boolean;
@@ -118,3 +120,105 @@ export interface MatchAnalysis {
   };
   keyRallies: KeyRally[];
 }
+
+export interface CuratedMatch {
+  id: string;
+  title: string;
+  tournament: string;
+  year: number;
+  duration: string;
+  youtubeUrl: string;
+  opponent: string;
+  outcome: string;
+  keyLearning: string;
+  thumbnailUrl: string;
+}
+
+export interface ProPlayerAnalysis {
+  player_name: string;
+  signature_moves: string[];
+  movement_style: string;
+  attack_patterns: string;
+  defensive_style: string;
+  mental_game: string;
+  lessons_for_amateurs: string[];
+  training_drills: string[];
+  analyzed_at?: string;
+  youtube_url?: string;
+  video_title?: string;
+}
+
+export interface ProPlayer {
+  id: string;
+  name: string;
+  country: string;
+  countryCode: string;
+  flag: string;
+  playingStyle: 'Aggressive Attacker' | 'All-Court Player' | 'Defensive Specialist' | 'Net Dominator' | string;
+  styleSubtitle: string;
+  worldRanking: string;
+  avatar: string;
+  bannerImage: string;
+  dominantHand: 'Right' | 'Left';
+  height: string;
+  careerTitles: number;
+  racket: string;
+  bio: string;
+  stats: {
+    smashSpeedKmH: number;
+    defenseRating: number; // 0-100
+    deceptiveShotRating: number; // 0-100
+    staminaRating: number; // 0-100
+    netAccuracy: number; // 0-100
+    winRate: number; // percentage
+    unforcedErrorsPerGame: number;
+  };
+  recommendedMatches: CuratedMatch[];
+  defaultAnalysis: ProPlayerAnalysis;
+}
+
+export interface ProComparisonGap {
+  gap: string;
+  impact: 'Critical' | 'High' | 'Moderate';
+  technical_detail: string;
+  amateur_metric: string;
+  pro_benchmark: string;
+}
+
+export interface RoadmapWeek {
+  week: string;
+  title: string;
+  focus_drill: string;
+  target_outcome: string;
+}
+
+export interface ProComparisonResult {
+  player_name: string;
+  pro_player_id: string;
+  pro_player_name: string;
+  pro_player_country: string;
+  pro_player_flag: string;
+  pro_player_style: string;
+  pro_player_avatar: string;
+  similarities: string[];
+  gaps: ProComparisonGap[];
+  improvement_roadmap: RoadmapWeek[];
+  encouragement: string;
+  player_stats: {
+    smash_speed: number;
+    win_rate: number;
+    net_control: number;
+    unforced_errors: number;
+    stamina_score: number;
+    defense_rating: number;
+  };
+  pro_stats: {
+    smash_speed: number;
+    win_rate: number;
+    net_control: number;
+    unforced_errors: number;
+    stamina_score: number;
+    defense_rating: number;
+  };
+}
+

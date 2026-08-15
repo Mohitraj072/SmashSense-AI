@@ -268,6 +268,9 @@
         const icon = getSportIcon(sport);
         const isExpanded = expandedMatchId === matchId;
 
+        // Check for YouTube URL
+        const ytUrl = match.youtube_url || match.youtubeUrl || match.ai_analysis?.youtube_url || match.ai_analysis?.youtubeUrl || (typeof match.videoUrl === 'string' && match.videoUrl.includes('youtu') ? match.videoUrl : null);
+
         // Extracts 3 bullet points
         const vulnerability = match.player_weaknesses?.[0] || (match.weaknesses?.[0]?.description) || 'Late shoulder turn & footwork recovery in deep backhand corner.';
         const tactical = match.opponent_strategy || match.aiSummary || 'Pin opponent to deep corner to force weak returns.';
@@ -299,6 +302,13 @@
                   <span class="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-extrabold flex items-center gap-1">
                     <span>${icon}</span> <span>${sport}</span>
                   </span>
+                  ${
+                    ytUrl ? `
+                      <a href="${ytUrl}" target="_blank" rel="noopener noreferrer" class="text-[10px] px-2 py-0.5 rounded-md bg-red-500/10 border border-red-500/30 text-red-400 hover:text-red-300 font-bold flex items-center gap-1 transition-colors" title="Watch on YouTube">
+                        <span>▶️</span> <span>YouTube</span>
+                      </a>
+                    ` : ''
+                  }
                   <span class="text-[10px] px-2 py-0.5 rounded-md bg-[#0A0F1E] border border-[#1F2937] text-[#9CA3AF] font-medium">
                     ${match.category || "Men's Singles"}
                   </span>

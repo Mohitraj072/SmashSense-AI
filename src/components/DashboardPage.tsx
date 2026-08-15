@@ -233,6 +233,33 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               </button>
             </div>
 
+            {/* Quick Action Card: Study a Pro Player */}
+            <div className="mt-4 p-4 rounded-2xl bg-slate-950/70 border border-emerald-500/30 backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+              <div className="flex items-start sm:items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center text-xl shrink-0 shadow-inner">
+                  🏆
+                </div>
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-sm font-black text-white">Study a Pro Player</h3>
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 text-[10px] font-bold border border-emerald-500/25">
+                      New Feature
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-300">
+                    Analyze Viktor Axelsen, Sindhu, or any pro's YouTube match
+                  </p>
+                </div>
+              </div>
+              <a
+                href="/pro_analysis.html"
+                className="px-5 py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 text-xs font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition-all shrink-0 cursor-pointer"
+              >
+                <span>Explore Pro Players</span>
+                <ChevronRight className="w-4 h-4" />
+              </a>
+            </div>
+
           </div>
 
           {/* Small AI Coach Avatar Card on Right Side */}

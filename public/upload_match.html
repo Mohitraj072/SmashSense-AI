@@ -63,6 +63,15 @@
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold text-[#F9FAFB] tracking-tight">Upload Match Video</h1>
           <p class="text-sm text-[#9CA3AF]">Upload match footage for comprehensive AI biomechanical & tactical breakdown</p>
+          <div class="flex flex-wrap items-center gap-2 mt-2">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/15 border border-red-500/30 text-red-400 text-xs font-bold">
+              <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+              ▶️ YouTube Link Analysis
+            </span>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
+              📁 MP4 / MOV Video File Upload
+            </span>
+          </div>
         </div>
       </div>
 
@@ -226,26 +235,108 @@
 
           </div>
 
-          <!-- Drag and Drop Dropzone -->
-          <div class="space-y-2">
-            <label class="block text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">
-              Match Video File <span class="text-[#00C853]">*</span>
-            </label>
-            <div
-              id="dropzone"
-              class="border-2 border-dashed border-[#00C853]/60 hover:border-[#00C853] bg-[#0A0F1E]/80 rounded-2xl p-8 text-center cursor-pointer transition-all space-y-3 group"
-            >
-              <input type="file" id="video-file-input" accept="video/*" class="hidden" />
-              <div class="w-16 h-16 rounded-2xl bg-[#00C853]/10 border border-[#00C853]/30 flex items-center justify-center text-3xl text-[#00C853] mx-auto group-hover:scale-110 transition-transform">
-                🏸
+          <!-- Tab Switcher for Video Upload vs YouTube Link -->
+          <div class="space-y-3">
+            <div class="flex items-center gap-2 p-1 rounded-xl bg-[#0A0F1E] border border-[#1F2937]">
+              <button
+                type="button"
+                id="tab-upload-btn"
+                class="flex-1 py-2.5 px-4 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 bg-[#00C853] text-[#0A0F1E] shadow-sm cursor-pointer"
+              >
+                <span>📁</span>
+                <span>Upload Video File</span>
+              </button>
+              <button
+                type="button"
+                id="tab-youtube-btn"
+                class="flex-1 py-2.5 px-4 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 text-[#9CA3AF] hover:text-[#F9FAFB] hover:bg-[#111827] cursor-pointer"
+              >
+                <span>▶️</span>
+                <span>YouTube Link</span>
+                <span class="px-1.5 py-0.5 rounded bg-red-600/90 text-white text-[10px] font-black tracking-wider">YOUTUBE</span>
+              </button>
+            </div>
+
+            <!-- Tab 1: Video File Dropzone -->
+            <div id="tab-upload-content" class="space-y-2">
+              <label class="block text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">
+                Match Video File <span class="text-[#00C853]">*</span>
+              </label>
+              <div
+                id="dropzone"
+                class="border-2 border-dashed border-[#00C853]/60 hover:border-[#00C853] bg-[#0A0F1E]/80 rounded-2xl p-8 text-center cursor-pointer transition-all space-y-3 group"
+              >
+                <input type="file" id="video-file-input" accept="video/*" class="hidden" />
+                <div class="w-16 h-16 rounded-2xl bg-[#00C853]/10 border border-[#00C853]/30 flex items-center justify-center text-3xl text-[#00C853] mx-auto group-hover:scale-110 transition-transform">
+                  🏸
+                </div>
+                <div class="space-y-1">
+                  <p id="file-label-main" class="text-sm font-semibold text-[#F9FAFB]">
+                    Drag your match video here or click to browse
+                  </p>
+                  <p id="file-label-sub" class="text-xs text-[#9CA3AF]">
+                    Supports MP4, MOV, AVI, MKV (Up to 500MB)
+                  </p>
+                </div>
               </div>
-              <div class="space-y-1">
-                <p id="file-label-main" class="text-sm font-semibold text-[#F9FAFB]">
-                  Drag your match video here or click to browse
+            </div>
+
+            <!-- Tab 2: YouTube Link Tab -->
+            <div id="tab-youtube-content" class="hidden space-y-3">
+              <label class="block text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">
+                YouTube Match Video URL <span class="text-[#00C853]">*</span>
+              </label>
+              <div class="space-y-2">
+                <div class="flex flex-col sm:flex-row gap-2">
+                  <div class="relative flex-1">
+                    <input
+                      type="url"
+                      id="youtube-url-input"
+                      name="youtube_url"
+                      placeholder="Paste YouTube match video URL here..."
+                      class="w-full bg-[#0A0F1E] border border-[#1F2937] focus:border-[#00C853] focus:ring-1 focus:ring-[#00C853] rounded-xl px-4 py-3 text-sm text-[#F9FAFB] placeholder-[#6B7280] outline-none transition-all"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    id="youtube-preview-btn"
+                    class="px-5 py-3 rounded-xl bg-[#1F2937] hover:bg-[#374151] text-[#F9FAFB] hover:text-[#00C853] border border-[#374151] font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
+                  >
+                    <span>👁️ Preview</span>
+                  </button>
+                </div>
+
+                <!-- Accepted formats hint -->
+                <p class="text-[11px] text-[#9CA3AF] flex items-center gap-1.5">
+                  <span class="text-[#00C853]">ℹ️</span> Accepted formats: <span class="font-mono text-slate-300">youtube.com/watch?v=...</span> or <span class="font-mono text-slate-300">youtu.be/...</span>
                 </p>
-                <p id="file-label-sub" class="text-xs text-[#9CA3AF]">
-                  Supports MP4, MOV, AVI, MKV (Up to 500MB)
-                </p>
+
+                <!-- Validation Error Message (Red) -->
+                <div id="youtube-error" class="hidden p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-semibold flex items-center gap-2">
+                  <span>⚠️</span>
+                  <span id="youtube-error-text">Please enter a valid YouTube video URL (e.g. https://www.youtube.com/watch?v=...)</span>
+                </div>
+
+                <!-- YouTube Thumbnail Preview Card -->
+                <div id="youtube-preview-card" class="hidden p-4 rounded-2xl bg-[#0A0F1E] border border-[#1F2937] space-y-3">
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-[#00C853] flex items-center gap-1.5">
+                      <span>▶️</span> YouTube Match Video Ready
+                    </span>
+                    <span id="youtube-video-id-badge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-[#111827] border border-[#1F2937] text-slate-400">
+                      ID: -
+                    </span>
+                  </div>
+                  <div class="relative rounded-xl overflow-hidden aspect-video max-h-52 bg-black border border-[#1F2937]">
+                    <img id="youtube-thumbnail-img" src="" alt="YouTube Video Thumbnail" class="w-full h-full object-cover" />
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-3">
+                      <div class="flex items-center gap-2 text-xs font-bold text-[#F9FAFB]">
+                        <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                        <span>Video Stream Verified & Ready for AI Extraction</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -543,6 +634,93 @@
         }, (idx + 1) * 400);
       });
 
+      // Tab Switcher Elements
+      const tabUploadBtn = document.getElementById('tab-upload-btn');
+      const tabYoutubeBtn = document.getElementById('tab-youtube-btn');
+      const tabUploadContent = document.getElementById('tab-upload-content');
+      const tabYoutubeContent = document.getElementById('tab-youtube-content');
+      const youtubeUrlInput = document.getElementById('youtube-url-input');
+      const youtubePreviewBtn = document.getElementById('youtube-preview-btn');
+      const youtubeError = document.getElementById('youtube-error');
+      const youtubeErrorText = document.getElementById('youtube-error-text');
+      const youtubePreviewCard = document.getElementById('youtube-preview-card');
+      const youtubeThumbnailImg = document.getElementById('youtube-thumbnail-img');
+      const youtubeVideoIdBadge = document.getElementById('youtube-video-id-badge');
+
+      let currentUploadMode = 'file'; // 'file' or 'youtube'
+
+      function extractYoutubeIdFromUrl(url) {
+        if (!url || typeof url !== 'string') return null;
+        const trimmed = url.trim();
+        const shortMatch = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:embed|v|shorts)\/)([\w-]{11})/);
+        if (shortMatch) return shortMatch[1];
+        try {
+          const parsed = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
+          if (parsed.hostname.includes('youtube.com') || parsed.hostname.includes('youtu.be')) {
+            const v = parsed.searchParams.get('v');
+            if (v && v.length === 11) return v;
+          }
+        } catch(e) {}
+        const generalMatch = trimmed.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/);
+        return generalMatch ? generalMatch[1] : null;
+      }
+
+      function switchTab(mode) {
+        currentUploadMode = mode;
+        if (mode === 'file') {
+          tabUploadBtn.className = 'flex-1 py-2.5 px-4 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 bg-[#00C853] text-[#0A0F1E] shadow-sm cursor-pointer';
+          tabYoutubeBtn.className = 'flex-1 py-2.5 px-4 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 text-[#9CA3AF] hover:text-[#F9FAFB] hover:bg-[#111827] cursor-pointer';
+          tabUploadContent.classList.remove('hidden');
+          tabYoutubeContent.classList.add('hidden');
+        } else {
+          tabYoutubeBtn.className = 'flex-1 py-2.5 px-4 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 bg-[#00C853] text-[#0A0F1E] shadow-sm cursor-pointer';
+          tabUploadBtn.className = 'flex-1 py-2.5 px-4 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 text-[#9CA3AF] hover:text-[#F9FAFB] hover:bg-[#111827] cursor-pointer';
+          tabYoutubeContent.classList.remove('hidden');
+          tabUploadContent.classList.add('hidden');
+          youtubeUrlInput.focus();
+        }
+      }
+
+      tabUploadBtn.addEventListener('click', () => switchTab('file'));
+      tabYoutubeBtn.addEventListener('click', () => switchTab('youtube'));
+
+      function handleYoutubePreview() {
+        const rawUrl = (youtubeUrlInput.value || '').trim();
+        if (!rawUrl) {
+          youtubeErrorText.textContent = 'Please enter a YouTube video URL first.';
+          youtubeError.classList.remove('hidden');
+          youtubePreviewCard.classList.add('hidden');
+          return false;
+        }
+
+        const ytId = extractYoutubeIdFromUrl(rawUrl);
+        if (!ytId) {
+          youtubeErrorText.textContent = 'Invalid YouTube URL. Please enter a valid YouTube link (e.g. youtube.com/watch?v=... or youtu.be/...)';
+          youtubeError.classList.remove('hidden');
+          youtubePreviewCard.classList.add('hidden');
+          return false;
+        }
+
+        // Valid YouTube URL
+        youtubeError.classList.add('hidden');
+        youtubeThumbnailImg.src = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+        youtubeVideoIdBadge.textContent = `ID: ${ytId}`;
+        youtubePreviewCard.classList.remove('hidden');
+        return true;
+      }
+
+      youtubePreviewBtn.addEventListener('click', handleYoutubePreview);
+      youtubeUrlInput.addEventListener('input', () => {
+        youtubeError.classList.add('hidden');
+        const rawUrl = (youtubeUrlInput.value || '').trim();
+        const ytId = extractYoutubeIdFromUrl(rawUrl);
+        if (ytId) {
+          youtubeThumbnailImg.src = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+          youtubeVideoIdBadge.textContent = `ID: ${ytId}`;
+          youtubePreviewCard.classList.remove('hidden');
+        }
+      });
+
       // Rotating messages cycling every 3 seconds (Requirement 1)
       const rotatingMessages = [
         "Analyzing your footwork...",
@@ -550,6 +728,15 @@
         "Reading opponent patterns...",
         "Evaluating smash trajectories & court coverage...",
         "Calculating unforced error impact zones...",
+        "Synthesizing AI coaching recommendations..."
+      ];
+
+      const youtubeRotatingMessages = [
+        "Fetching your YouTube match video...",
+        "Downloading match footage...",
+        "AI Coach is analyzing your gameplay...",
+        "Detecting stroke mechanics and footwork...",
+        "Calculating smash angles and recovery times...",
         "Synthesizing AI coaching recommendations..."
       ];
 
@@ -601,6 +788,18 @@
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
+        // If on YouTube mode, validate URL first
+        if (currentUploadMode === 'youtube') {
+          const rawUrl = (youtubeUrlInput.value || '').trim();
+          const ytId = extractYoutubeIdFromUrl(rawUrl);
+          if (!ytId) {
+            youtubeErrorText.textContent = 'Invalid YouTube URL. Please enter a valid YouTube link (e.g. youtube.com/watch?v=... or youtu.be/...)';
+            youtubeError.classList.remove('hidden');
+            youtubeUrlInput.focus();
+            return;
+          }
+        }
+
         // 1. Hide error card if shown
         errorCard.classList.add('hidden');
 
@@ -611,17 +810,20 @@
         // 3. Show full-screen loading overlay (Requirement 1)
         loadingOverlay.classList.remove('hidden');
 
+        // Choose appropriate rotating messages
+        const activeMessages = currentUploadMode === 'youtube' ? youtubeRotatingMessages : rotatingMessages;
+
         // Reset progress & rotating text
         messageIndex = 0;
-        rotatingTextEl.textContent = rotatingMessages[0];
+        rotatingTextEl.textContent = activeMessages[0];
 
         // Start rotating text every 3 seconds (Requirement 1)
         clearInterval(rotationInterval);
         rotationInterval = setInterval(() => {
-          messageIndex = (messageIndex + 1) % rotatingMessages.length;
+          messageIndex = (messageIndex + 1) % activeMessages.length;
           rotatingTextEl.style.opacity = 0;
           setTimeout(() => {
-            rotatingTextEl.textContent = rotatingMessages[messageIndex];
+            rotatingTextEl.textContent = activeMessages[messageIndex];
             rotatingTextEl.style.opacity = 1;
           }, 150);
         }, 3000);
@@ -650,8 +852,11 @@
         // Build FormData
         const formData = new FormData(form);
 
-        if (videoFileInput.files && videoFileInput.files[0]) {
+        if (currentUploadMode === 'file' && videoFileInput.files && videoFileInput.files[0]) {
           formData.append('video', videoFileInput.files[0]);
+        } else if (currentUploadMode === 'youtube') {
+          formData.set('youtube_url', (youtubeUrlInput.value || '').trim());
+          formData.set('youtubeUrl', (youtubeUrlInput.value || '').trim());
         }
 
         try {
@@ -686,14 +891,16 @@
             const finalMatch = resultData.match || resultData.result || resultData;
             
             // Build Supabase payload from form fields + resultData
+            const rawYt = currentUploadMode === 'youtube' ? (youtubeUrlInput.value || '').trim() : (finalMatch.youtube_url || finalMatch.youtubeUrl || null);
             const supabasePayload = {
               opponent_name: opponentName,
               match_date: matchDate,
               result: resultVal === 'Win' ? 'Win' : 'Loss',
               player_score: scoresVal || '21-18, 19-21, 21-15',
-              ai_analysis: finalMatch,
+              ai_analysis: { ...finalMatch, youtube_url: rawYt, youtubeUrl: rawYt },
               overall_rating: finalMatch.overall_rating?.score || (resultVal === 'Win' ? 8.5 : 6.8),
-              sport: selectedSport
+              sport: selectedSport,
+              youtube_url: rawYt
             };
 
             // Save to Supabase (Requirement 3 & 6)
@@ -760,6 +967,7 @@
                 rotatingTextEl.textContent = "Analysis complete! Saving to Supabase...";
 
                 const finalMatch = statusData.match || statusData.result || {};
+                const rawYt = currentUploadMode === 'youtube' ? (youtubeUrlInput.value || '').trim() : (finalMatch.youtube_url || finalMatch.youtubeUrl || statusData.youtube_url || null);
                 
                 // Build Supabase payload from form fields + statusData
                 const supabasePayload = {
@@ -767,9 +975,10 @@
                   match_date: matchDate,
                   result: resultVal === 'Win' ? 'Win' : 'Loss',
                   player_score: scoresVal || '21-18, 19-21, 21-15',
-                  ai_analysis: finalMatch,
+                  ai_analysis: { ...finalMatch, youtube_url: rawYt, youtubeUrl: rawYt },
                   overall_rating: finalMatch.overall_rating?.score || (resultVal === 'Win' ? 8.5 : 6.8),
-                  sport: selectedSport
+                  sport: selectedSport,
+                  youtube_url: rawYt
                 };
 
                 // Save to Supabase (Requirement 3 & 6)

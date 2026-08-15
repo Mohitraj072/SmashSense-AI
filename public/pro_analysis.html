@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pro Player Analysis - SmashSense.AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brandBg: '#0A0F1E',
+            brandCard: '#111827',
+            brandBorder: '#1F2937',
+            brandAccent: '#00C853',
+            brandWarning: '#FF6B35',
+            brandInfo: '#3B82F6',
+            brandTextPrimary: '#F9FAFB',
+            brandTextSecondary: '#9CA3AF',
+            brandSuccess: '#10B981',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#0A0F1E] text-[#F9FAFB] font-sans antialiased min-h-screen pb-24">
+
+  <!-- Universal SmashSense Navigation Bar Container -->
+  <div id="navbar-container"></div>
+  <script src="/navbar.js"></script>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-10">
+
+    <!-- Hero Header -->
+    <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-[#1F2937]">
+      <div>
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00C853]/10 border border-[#00C853]/30 text-[#00C853] text-xs font-bold uppercase tracking-wider mb-2">
+          <span>🏸</span> Pro Intelligence & Video Biomechanics
+        </div>
+        <h1 class="text-2xl sm:text-4xl font-black text-white tracking-tight">Pro Player Analysis</h1>
+        <p class="text-sm sm:text-base text-[#9CA3AF] mt-1 max-w-2xl">
+          Study the world's top professional badminton athletes, break down their signature techniques via Gemini video intelligence, and compare your biomechanics side-by-side.
+        </p>
+      </div>
+
+      <!-- Quick Nav Buttons -->
+      <div class="flex items-center gap-3">
+        <a href="#pro-library" class="px-4 py-2 rounded-xl bg-[#111827] hover:bg-[#1F2937] text-white text-xs font-bold border border-[#1F2937] transition-all">
+          Pro Library
+        </a>
+        <a href="#youtube-library" class="px-4 py-2 rounded-xl bg-[#111827] hover:bg-[#1F2937] text-white text-xs font-bold border border-[#1F2937] transition-all">
+          Match Library
+        </a>
+        <a href="/" class="px-4 py-2 rounded-xl bg-[#00C853] hover:bg-[#00B048] text-black text-xs font-black transition-all shadow-lg shadow-[#00C853]/20">
+          ← Main App
+        </a>
+      </div>
+    </header>
+
+    <!-- SECTION 1: PRO PLAYER LIBRARY -->
+    <section id="pro-library" class="space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 class="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
+            <span>🏆</span> Pro Player Library
+          </h2>
+          <p class="text-xs sm:text-sm text-[#9CA3AF]">
+            Select an elite champion to analyze their movement patterns or compare directly with your recent matches.
+          </p>
+        </div>
+        
+        <!-- Filter badges -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-1" id="filter-container">
+          <button onclick="filterPlayers('All')" class="filter-btn active px-3 py-1.5 rounded-lg text-xs font-bold bg-[#00C853] text-black transition-all">All (8)</button>
+          <button onclick="filterPlayers('Aggressive Attacker')" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-[#111827] hover:bg-[#1F2937] text-[#9CA3AF] border border-[#1F2937] transition-all">Attackers</button>
+          <button onclick="filterPlayers('Defensive Specialist')" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-[#111827] hover:bg-[#1F2937] text-[#9CA3AF] border border-[#1F2937] transition-all">Defenders</button>
+          <button onclick="filterPlayers('Net Dominator')" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-[#111827] hover:bg-[#1F2937] text-[#9CA3AF] border border-[#1F2937] transition-all">Net Masters</button>
+        </div>
+      </div>
+
+      <!-- Player Cards Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5" id="pro-players-grid">
+        <!-- Rendered dynamically via JavaScript -->
+      </div>
+    </section>
+
+    <!-- SECTION 2: ANALYZE PRO STYLE (Interactive Workspace) -->
+    <section id="analyze-section" class="bg-[#111827] border border-[#1F2937] rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl transition-all">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1F2937] pb-5">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-[#00C853]/10 border border-[#00C853]/30 flex items-center justify-center text-[#00C853] text-2xl">
+            ⚡
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span id="active-player-flag" class="text-xl">🇩🇰</span>
+              <h2 id="active-player-title" class="text-xl sm:text-2xl font-black text-white">Analyze Pro Style: Viktor Axelsen</h2>
+            </div>
+            <p id="active-player-subtitle" class="text-xs sm:text-sm text-[#9CA3AF]">
+              Aggressive Attacker • World #1 (2x Olympic Gold)
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-bold">
+            <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span> Gemini 3.7 Vision Ready
+          </span>
+        </div>
+      </div>
+
+      <!-- Video URL Input Form -->
+      <div class="space-y-3">
+        <label id="input-label" class="block text-xs sm:text-sm font-bold text-slate-300">
+          Paste a YouTube match video URL of Viktor Axelsen:
+        </label>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <div class="relative flex-1">
+            <input 
+              type="text" 
+              id="youtube-url-input" 
+              placeholder="https://www.youtube.com/watch?v=..." 
+              value="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+              class="w-full px-4 py-3.5 bg-[#0A0F1E] border border-[#1F2937] rounded-xl text-white text-sm focus:outline-none focus:border-[#00C853] focus:ring-1 focus:ring-[#00C853] font-mono transition-all"
+            />
+          </div>
+          <button 
+            id="btn-analyze-video"
+            onclick="triggerProAnalysis()" 
+            class="px-6 py-3.5 bg-[#00C853] hover:bg-[#00B048] text-black font-black text-sm rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#00C853]/20 cursor-pointer min-w-[170px]"
+          >
+            <span>Analyze Style</span>
+            <span class="text-lg">→</span>
+          </button>
+        </div>
+
+        <!-- Curated quick pick buttons for this player -->
+        <div class="flex flex-wrap items-center gap-2 pt-1" id="quick-matches-container">
+          <span class="text-[11px] font-bold text-[#9CA3AF]">Quick Matches:</span>
+          <!-- Dynamic buttons inserted here -->
+        </div>
+      </div>
+
+      <!-- Loading State Indicator -->
+      <div id="analysis-loading" class="hidden p-8 rounded-2xl bg-[#0A0F1E] border border-[#1F2937] text-center space-y-4">
+        <div class="inline-block w-10 h-10 border-4 border-[#00C853]/30 border-t-[#00C853] rounded-full animate-spin"></div>
+        <div>
+          <h4 class="text-base font-black text-white">Synthesizing Pro Biomechanics with Gemini AI...</h4>
+          <p class="text-xs text-[#9CA3AF] mt-1">Analyzing shot distribution, footwork kinetics, signature patterns & tactical lessons</p>
+        </div>
+      </div>
+
+      <!-- Dynamic Analysis Results Card -->
+      <div id="analysis-results-container" class="space-y-6">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- SECTION 3: COMPARE WITH ME (Side-by-Side Comparison Workspace) -->
+    <section id="compare-section" class="bg-[#111827] border border-[#1F2937] rounded-3xl p-6 sm:p-8 space-y-8 shadow-2xl">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1F2937] pb-5">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold uppercase tracking-wider mb-1">
+            <span>⚖️</span> Head-to-Head Technical Gap Analysis
+          </div>
+          <h2 class="text-xl sm:text-2xl font-black text-white">Compare Your Game With The Pros</h2>
+          <p class="text-xs sm:text-sm text-[#9CA3AF]">
+            Evaluates your last 3 analyzed matches against world champion benchmarks with a 30-day technical roadmap.
+          </p>
+        </div>
+
+        <!-- Pro selector dropdown -->
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-bold text-[#9CA3AF]">Compare With:</label>
+          <select id="compare-pro-select" onchange="onSelectComparePro(this.value)" class="bg-[#0A0F1E] border border-[#1F2937] text-white text-xs font-bold rounded-xl px-3 py-2 focus:outline-none focus:border-[#00C853]">
+            <!-- Rendered dynamically -->
+          </select>
+        </div>
+      </div>
+
+      <!-- Comparison Container -->
+      <div id="comparison-results-container" class="space-y-8">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- SECTION 4: PRO MATCH YOUTUBE LIBRARY -->
+    <section id="youtube-library" class="space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 class="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
+            <span>📺</span> Pro Match YouTube Library
+          </h2>
+          <p class="text-xs sm:text-sm text-[#9CA3AF]">
+            Curated championship finals and milestone matches with tactical learning breakdowns.
+          </p>
+        </div>
+
+        <div class="text-xs font-mono text-[#00C853] bg-[#00C853]/10 px-3 py-1.5 rounded-lg border border-[#00C853]/20">
+          24 Curated Tournament Matches
+        </div>
+      </div>
+
+      <!-- Curated Matches Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="curated-matches-grid">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Client-side Logic Script -->
+  <script>
+    let proPlayers = [];
+    let currentSelectedPlayer = null;
+    let currentComparePlayer = null;
+    let userRecentMatches = [];
+    let loggedInUser = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadProPlayers();
+      await fetchUserData();
+    });
+
+    async function loadProPlayers() {
+      try {
+        const res = await fetch('/api/pro_players');
+        const data = await res.json();
+        proPlayers = data.players || [];
+
+        if (proPlayers.length > 0) {
+          currentSelectedPlayer = proPlayers[0];
+          currentComparePlayer = proPlayers[0];
+          renderPlayerCards(proPlayers);
+          renderCuratedMatches(proPlayers);
+          populateCompareSelect(proPlayers);
+          selectPlayerForAnalysis(currentSelectedPlayer.id);
+          triggerCompareWithPro(currentComparePlayer.id);
+        }
+      } catch (err) {
+        console.error('Failed to load pro players:', err);
+      }
+    }
+
+    async function fetchUserData() {
+      try {
+        // Fetch matches
+        const matchesRes = await fetch('/api/matches');
+        if (matchesRes.ok) {
+          userRecentMatches = await matchesRes.json();
+        }
+        // Fetch user
+        const userRes = await fetch('/api/user');
+        if (userRes.ok) {
+          loggedInUser = await userRes.json();
+        }
+      } catch (e) {
+        console.warn('Using local fallback state for user matches');
+      }
+    }
+
+    function renderPlayerCards(players) {
+      const grid = document.getElementById('pro-players-grid');
+      if (!grid) return;
+
+      grid.innerHTML = players.map(p => `
+        <div class="bg-[#111827] border border-[#1F2937] hover:border-[#00C853]/50 rounded-2xl p-5 flex flex-col justify-between space-y-4 transition-all hover:shadow-xl hover:shadow-[#00C853]/5 group">
+          
+          <div class="space-y-3">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-3">
+                <img src="${p.avatar}" alt="${p.name}" class="w-12 h-12 rounded-xl object-cover border border-[#1F2937] group-hover:border-[#00C853]/40" />
+                <div>
+                  <h3 class="text-base font-black text-white group-hover:text-[#00C853] transition-colors">${p.name}</h3>
+                  <p class="text-xs text-[#9CA3AF] flex items-center gap-1">
+                    <span>${p.flag}</span> <span>${p.country}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Style Badge & Ranking -->
+            <div class="flex flex-wrap items-center gap-2 pt-1">
+              <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold ${getStyleBadgeClass(p.playingStyle)}">
+                ${p.playingStyle}
+              </span>
+              <span class="px-2.5 py-1 rounded-lg bg-[#0A0F1E] text-slate-300 text-[10px] font-bold border border-[#1F2937]">
+                ${p.worldRanking}
+              </span>
+            </div>
+
+            <!-- Bio snippet -->
+            <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+              ${p.bio}
+            </p>
+
+            <!-- Key metrics preview -->
+            <div class="grid grid-cols-2 gap-2 pt-1 text-center font-mono">
+              <div class="bg-[#0A0F1E] p-2 rounded-xl border border-[#1F2937]">
+                <div class="text-[10px] text-[#9CA3AF]">Top Smash</div>
+                <div class="text-xs font-black text-[#00C853]">${p.stats.smashSpeedKmH} km/h</div>
+              </div>
+              <div class="bg-[#0A0F1E] p-2 rounded-xl border border-[#1F2937]">
+                <div class="text-[10px] text-[#9CA3AF]">Defense Rating</div>
+                <div class="text-xs font-black text-blue-400">${p.stats.defenseRating}/100</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="grid grid-cols-2 gap-2 pt-2 border-t border-[#1F2937]">
+            <button 
+              onclick="selectPlayerForAnalysis('${p.id}')"
+              class="px-3 py-2 rounded-xl bg-[#00C853]/10 hover:bg-[#00C853] text-[#00C853] hover:text-black text-xs font-bold border border-[#00C853]/30 transition-all text-center cursor-pointer"
+            >
+              Analyze Style
+            </button>
+            <button 
+              onclick="triggerCompareWithPro('${p.id}')"
+              class="px-3 py-2 rounded-xl bg-[#0A0F1E] hover:bg-[#1F2937] text-white text-xs font-bold border border-[#1F2937] transition-all text-center cursor-pointer"
+            >
+              Compare With Me
+            </button>
+          </div>
+
+        </div>
+      `).join('');
+    }
+
+    function getStyleBadgeClass(style) {
+      if (style.includes('Attacker')) return 'bg-rose-500/10 text-rose-400 border border-rose-500/30';
+      if (style.includes('Defensive')) return 'bg-blue-500/10 text-blue-400 border border-blue-500/30';
+      if (style.includes('Net')) return 'bg-amber-500/10 text-amber-400 border border-amber-500/30';
+      return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30';
+    }
+
+    function filterPlayers(style) {
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active', 'bg-[#00C853]', 'text-black');
+        btn.classList.add('bg-[#111827]', 'text-[#9CA3AF]');
+      });
+      event.target.classList.add('active', 'bg-[#00C853]', 'text-black');
+      event.target.classList.remove('bg-[#111827]', 'text-[#9CA3AF]');
+
+      if (style === 'All') {
+        renderPlayerCards(proPlayers);
+      } else {
+        const filtered = proPlayers.filter(p => p.playingStyle === style);
+        renderPlayerCards(filtered);
+      }
+    }
+
+    function selectPlayerForAnalysis(playerId, customUrl = null) {
+      const player = proPlayers.find(p => p.id === playerId) || proPlayers[0];
+      currentSelectedPlayer = player;
+
+      document.getElementById('active-player-flag').innerText = player.flag;
+      document.getElementById('active-player-title').innerText = `Analyze Pro Style: ${player.name}`;
+      document.getElementById('active-player-subtitle').innerText = `${player.playingStyle} • ${player.worldRanking}`;
+      document.getElementById('input-label').innerText = `Paste a YouTube match video URL of ${player.name}:`;
+
+      const input = document.getElementById('youtube-url-input');
+      input.value = customUrl || (player.recommendedMatches[0] ? player.recommendedMatches[0].youtubeUrl : 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+
+      // Quick matches buttons
+      const quickContainer = document.getElementById('quick-matches-container');
+      quickContainer.innerHTML = `
+        <span class="text-[11px] font-bold text-[#9CA3AF]">Quick Picks:</span>
+        ${player.recommendedMatches.map(m => `
+          <button 
+            onclick="setQuickMatchUrl('${m.youtubeUrl}')"
+            class="px-2.5 py-1 rounded-lg bg-[#0A0F1E] hover:bg-[#1F2937] text-slate-300 text-[11px] font-medium border border-[#1F2937] transition-all"
+          >
+            ${m.title.split(' ')[0]} ${m.title.split(' ')[1] || ''}
+          </button>
+        `).join('')}
+      `;
+
+      // Render default or pre-computed analysis instantly
+      renderAnalysisResults(player.defaultAnalysis, player);
+
+      // Scroll to analyze section smoothly if triggered by user click
+      document.getElementById('analyze-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function setQuickMatchUrl(url) {
+      document.getElementById('youtube-url-input').value = url;
+    }
+
+    async function triggerProAnalysis() {
+      if (!currentSelectedPlayer) return;
+      const url = document.getElementById('youtube-url-input').value.trim();
+      const loading = document.getElementById('analysis-loading');
+      const results = document.getElementById('analysis-results-container');
+
+      loading.classList.remove('hidden');
+      results.classList.add('opacity-50');
+
+      try {
+        const res = await fetch('/api/pro_analysis', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            player_name: currentSelectedPlayer.name,
+            player_id: currentSelectedPlayer.id,
+            youtube_url: url
+          })
+        });
+
+        const data = await res.json();
+        if (data.analysis) {
+          renderAnalysisResults(data.analysis, currentSelectedPlayer);
+        }
+      } catch (err) {
+        console.error('Error analyzing pro video:', err);
+      } finally {
+        loading.classList.add('hidden');
+        results.classList.remove('opacity-50');
+      }
+    }
+
+    function renderAnalysisResults(analysis, player) {
+      const container = document.getElementById('analysis-results-container');
+      if (!container) return;
+
+      container.innerHTML = `
+        <!-- Profile Banner -->
+        <div class="bg-[#0A0F1E] border border-[#1F2937] rounded-2xl p-6 relative overflow-hidden">
+          <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
+            <div class="flex items-center gap-4">
+              <img src="${player.avatar}" alt="${player.name}" class="w-16 h-16 rounded-2xl object-cover border-2 border-[#00C853]/40 shadow-lg" />
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-2xl">${player.flag}</span>
+                  <h3 class="text-xl sm:text-2xl font-black text-white">${player.name}</h3>
+                </div>
+                <p class="text-xs text-[#00C853] font-bold mt-0.5">${player.styleSubtitle}</p>
+                <div class="flex items-center gap-3 text-xs text-[#9CA3AF] mt-2">
+                  <span>Dominant: <strong class="text-white">${player.dominantHand}-Handed</strong></span>
+                  <span>•</span>
+                  <span>Height: <strong class="text-white">${player.height}</strong></span>
+                  <span>•</span>
+                  <span>Titles: <strong class="text-white">${player.careerTitles}</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="flex items-center gap-3 font-mono">
+              <div class="bg-[#111827] px-4 py-2.5 rounded-xl border border-[#1F2937] text-center">
+                <div class="text-[10px] text-[#9CA3AF]">Max Smash</div>
+                <div class="text-sm font-black text-[#00C853]">${player.stats.smashSpeedKmH} km/h</div>
+              </div>
+              <div class="bg-[#111827] px-4 py-2.5 rounded-xl border border-[#1F2937] text-center">
+                <div class="text-[10px] text-[#9CA3AF]">Net Precision</div>
+                <div class="text-sm font-black text-amber-400">${player.stats.netAccuracy}%</div>
+              </div>
+              <div class="bg-[#111827] px-4 py-2.5 rounded-xl border border-[#1F2937] text-center">
+                <div class="text-[10px] text-[#9CA3AF]">Win Rate</div>
+                <div class="text-sm font-black text-blue-400">${player.stats.winRate}%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1. SIGNATURE MOVES (5 Cards) -->
+        <div class="space-y-3">
+          <h4 class="text-base font-black text-white flex items-center gap-2">
+            <span>🎯</span> 1. Signature Shots & Repeat Tactical Patterns
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            ${analysis.signature_moves.map((move, idx) => `
+              <div class="bg-[#0A0F1E] border border-[#1F2937] rounded-xl p-4 space-y-1.5 hover:border-[#00C853]/40 transition-all">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-black font-mono text-[#00C853] bg-[#00C853]/10 px-2 py-0.5 rounded">MOVE #${idx + 1}</span>
+                  <span class="text-xs text-slate-500">Signature</span>
+                </div>
+                <p class="text-xs font-semibold text-white leading-relaxed">${move}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- 2, 3, 4, 5. DEEP TACTICAL BREAKDOWN -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- 2. Movement & Footwork -->
+          <div class="bg-[#0A0F1E] border border-[#1F2937] rounded-2xl p-5 space-y-2">
+            <h4 class="text-sm font-black text-white flex items-center gap-2">
+              <span>⚡</span> 2. Movement Style & Court Coverage
+            </h4>
+            <p class="text-xs text-[#9CA3AF] leading-relaxed">${analysis.movement_style}</p>
+          </div>
+
+          <!-- 3. Attack Patterns -->
+          <div class="bg-[#0A0F1E] border border-[#1F2937] rounded-2xl p-5 space-y-2">
+            <h4 class="text-sm font-black text-white flex items-center gap-2">
+              <span>💥</span> 3. Attack Patterns & Setups
+            </h4>
+            <p class="text-xs text-[#9CA3AF] leading-relaxed">${analysis.attack_patterns}</p>
+          </div>
+
+          <!-- 4. Defensive Style -->
+          <div class="bg-[#0A0F1E] border border-[#1F2937] rounded-2xl p-5 space-y-2">
+            <h4 class="text-sm font-black text-white flex items-center gap-2">
+              <span>🛡️</span> 4. Defensive Style Under Pressure
+            </h4>
+            <p class="text-xs text-[#9CA3AF] leading-relaxed">${analysis.defensive_style}</p>
+          </div>
+
+          <!-- 5. Mental Game -->
+          <div class="bg-[#0A0F1E] border border-[#1F2937] rounded-2xl p-5 space-y-2">
+            <h4 class="text-sm font-black text-white flex items-center gap-2">
+              <span>🧠</span> 5. Mental Game & Tactical Management
+            </h4>
+            <p class="text-xs text-[#9CA3AF] leading-relaxed">${analysis.mental_game}</p>
+          </div>
+        </div>
+
+        <!-- 6. LESSONS FOR AMATEURS (5 Specific things to copy) -->
+        <div class="bg-[#0A0F1E] border border-[#1F2937] rounded-2xl p-6 space-y-4">
+          <h4 class="text-base font-black text-white flex items-center gap-2">
+            <span>💡</span> 6. Lessons for Amateurs: What You Can Copy
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            ${analysis.lessons_for_amateurs.map((lesson, idx) => `
+              <div class="bg-[#111827] border border-[#1F2937] rounded-xl p-3.5 space-y-1">
+                <div class="text-[10px] font-bold text-amber-400 uppercase tracking-wider">Lesson ${idx + 1}</div>
+                <p class="text-xs text-slate-200 leading-relaxed">${lesson}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- 7. TRAINING DRILLS (5 Drills) -->
+        <div class="bg-[#0A0F1E] border border-[#1F2937] rounded-2xl p-6 space-y-4">
+          <h4 class="text-base font-black text-white flex items-center gap-2">
+            <span>🏋️</span> 7. Targeted Training Drills to Build Similar Skills
+          </h4>
+          <div class="space-y-2">
+            ${analysis.training_drills.map((drill, idx) => `
+              <div class="flex items-start gap-3 bg-[#111827] p-3.5 rounded-xl border border-[#1F2937]">
+                <span class="w-6 h-6 rounded-lg bg-[#00C853]/10 text-[#00C853] text-xs font-black font-mono flex items-center justify-center shrink-0">
+                  ${idx + 1}
+                </span>
+                <p class="text-xs text-slate-300 font-medium leading-relaxed">${drill}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function populateCompareSelect(players) {
+      const select = document.getElementById('compare-pro-select');
+      if (!select) return;
+      select.innerHTML = players.map(p => `
+        <option value="${p.id}">${p.flag} ${p.name} (${p.playingStyle})</option>
+      `).join('');
+    }
+
+    function onSelectComparePro(playerId) {
+      triggerCompareWithPro(playerId);
+    }
+
+    async function triggerCompareWithPro(playerId) {
+      const pro = proPlayers.find(p => p.id === playerId) || proPlayers[0];
+      currentComparePlayer = pro;
+      const select = document.getElementById('compare-pro-select');
+      if (select) select.value = pro.id;
+
+      const container = document.getElementById('comparison-results-container');
+      container.innerHTML = `
+        <div class="p-8 text-center space-y-3">
+          <div class="inline-block w-8 h-8 border-3 border-[#00C853]/30 border-t-[#00C853] rounded-full animate-spin"></div>
+          <p class="text-xs text-[#9CA3AF]">Comparing your stats & style with ${pro.name}...</p>
+        </div>
+      `;
+
+      try {
+        const res = await fetch('/api/compare_with_pro', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pro_player_id: pro.id,
+            pro_player_name: pro.name,
+            player_name: loggedInUser ? loggedInUser.name : 'You',
+            user_matches: userRecentMatches
+          })
+        });
+
+        const data = await res.json();
+        if (data.comparison) {
+          renderComparisonResults(data.comparison, pro);
+        }
+      } catch (err) {
+        console.error('Error fetching pro comparison:', err);
+      }
+
+      document.getElementById('compare-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function renderComparisonResults(comp, pro) {
+      const container = document.getElementById('comparison-results-container');
+      if (!container) return;
+
+      container.innerHTML = `
+        <!-- Coach Motivational Banner -->
+        <div class="bg-gradient-to-r from-[#00C853]/15 via-[#111827] to-blue-500/15 border border-[#00C853]/30 rounded-2xl p-6">
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-xl bg-[#00C853] text-black font-black flex items-center justify-center shrink-0 text-lg">
+              💬
+            </div>
+            <div class="space-y-1">
+              <h4 class="text-sm font-black text-white">AI Coach Encouragement & Synergy</h4>
+              <p class="text-xs text-slate-300 leading-relaxed">${comp.encouragement}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- TWO COLUMN LAYOUT: Player vs Pro -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <!-- LEFT COLUMN: Player Stats -->
+          <div class="bg-[#0A0F1E] border border-[#1F2937] rounded-2xl p-6 space-y-5">
+            <div class="flex items-center justify-between border-b border-[#1F2937] pb-3">
+              <div>
+                <h3 class="text-base font-black text-white">${comp.player_name} (Your Game)</h3>
+                <p class="text-xs text-[#9CA3AF]">Aggregated from your last 3 matches</p>
+              </div>
+              <span class="px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-400 text-xs font-bold border border-blue-500/30">Amateur Profile</span>
+            </div>
+
+            <!-- Stats metric rows -->
+            <div class="space-y-3 font-mono text-xs">
+              <div class="flex justify-between items-center bg-[#111827] p-3 rounded-xl border border-[#1F2937]">
+                <span class="text-slate-400">Smash Speed</span>
+                <span class="font-bold text-white">${comp.player_stats.smash_speed} km/h</span>
+              </div>
+              <div class="flex justify-between items-center bg-[#111827] p-3 rounded-xl border border-[#1F2937]">
+                <span class="text-slate-400">Match Win Rate</span>
+                <span class="font-bold text-white">${comp.player_stats.win_rate}%</span>
+              </div>
+              <div class="flex justify-between items-center bg-[#111827] p-3 rounded-xl border border-[#1F2937]">
+                <span class="text-slate-400">Net Control</span>
+                <span class="font-bold text-white">${comp.player_stats.net_control}%</span>
+              </div>
+              <div class="flex justify-between items-center bg-[#111827] p-3 rounded-xl border border-[#1F2937]">
+                <span class="text-slate-400">Unforced Errors / Game</span>
+                <span class="font-bold text-rose-400">${comp.player_stats.unforced_errors}</span>
+              </div>
+              <div class="flex justify-between items-center bg-[#111827] p-3 rounded-xl border border-[#1F2937]">
+                <span class="text-slate-400">Defensive Rating</span>
+                <span class="font-bold text-white">${comp.player_stats.defense_rating}/100</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN: Pro Player Stats -->
+          <div class="bg-[#0A0F1E] border border-[#1F2937] rounded-2xl p-6 space-y-5">
+            <div class="flex items-center justify-between border-b border-[#1F2937] pb-3">
+              <div class="flex items-center gap-3">
+                <img src="${comp.pro_player_avatar}" alt="${comp.pro_player_name}" class="w-9 h-9 rounded-xl object-cover" />
+                <div>
+                  <h3 class="text-base font-black text-white">${comp.pro_player_flag} ${comp.pro_player_name}</h3>
+                  <p class="text-xs text-[#00C853] font-bold">${comp.pro_player_style}</p>
+                </div>
+              </div>
+              <span class="px-2.5 py-1 rounded-lg bg-[#00C853]/10 text-[#00C853] text-xs font-bold border border-[#00C853]/30">Pro Benchmark</span>
+            </div>
+
+            <!-- Stats metric rows -->
+            <div class="space-y-3 font-mono text-xs">
+              <div class="flex justify-between items-center bg-[#111827] p-3 rounded-xl border border-[#1F2937]">
+                <span class="text-slate-400">Top Smash Speed</span>
+                <span class="font-bold text-[#00C853]">${comp.pro_stats.smash_speed} km/h</span>
+              </div>
+              <div class="flex justify-between items-center bg-[#111827] p-3 rounded-xl border border-[#1F2937]">
+                <span class="text-slate-400">Career Win Rate</span>
+                <span class="font-bold text-[#00C853]">${comp.pro_stats.win_rate}%</span>
+              </div>
+              <div class="flex justify-between items-center bg-[#111827] p-3 rounded-xl border border-[#1F2937]">
+                <span class="text-slate-400">Net Accuracy</span>
+                <span class="font-bold text-[#00C853]">${comp.pro_stats.net_control}%</span>
+              </div>
+              <div class="flex justify-between items-center bg-[#111827] p-3 rounded-xl border border-[#1F2937]">
+                <span class="text-slate-400">Unforced Errors / Game</span>
+                <span class="font-bold text-emerald-400">${comp.pro_stats.unforced_errors}</span>
+              </div>
+              <div class="flex justify-between items-center bg-[#111827] p-3 rounded-xl border border-[#1F2937]">
+                <span class="text-slate-400">Defensive Rating</span>
+                <span class="font-bold text-[#00C853]">${comp.pro_stats.defense_rating}/100</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- SIMILARITIES -->
+        <div class="bg-[#0A0F1E] border border-[#1F2937] rounded-2xl p-6 space-y-3">
+          <h4 class="text-sm font-black text-white flex items-center gap-2">
+            <span>✨</span> What You Already Do Like ${comp.pro_player_name}
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            ${comp.similarities.map(sim => `
+              <div class="bg-[#111827] p-4 rounded-xl border border-[#1F2937] flex items-start gap-2">
+                <span class="text-[#00C853] font-bold">✓</span>
+                <p class="text-xs text-slate-300 leading-relaxed">${sim}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- TOP 5 TECHNICAL GAPS -->
+        <div class="space-y-4">
+          <h4 class="text-base font-black text-white flex items-center gap-2">
+            <span>🎯</span> Top 5 Specific Differences in Technique & Execution
+          </h4>
+          <div class="space-y-3">
+            ${comp.gaps.map((gap, idx) => `
+              <div class="bg-[#0A0F1E] border border-[#1F2937] rounded-2xl p-5 space-y-3 hover:border-[#00C853]/40 transition-all">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-mono font-black text-[#00C853] bg-[#00C853]/10 px-2 py-0.5 rounded">GAP #${idx + 1}</span>
+                    <h5 class="text-sm font-bold text-white">${gap.gap}</h5>
+                  </div>
+                  <span class="px-2.5 py-0.5 rounded text-[10px] font-black uppercase ${
+                    gap.impact === 'Critical' ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' :
+                    gap.impact === 'High' ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30' :
+                    'bg-blue-500/15 text-blue-400 border border-blue-500/30'
+                  }">${gap.impact} Priority</span>
+                </div>
+
+                <p class="text-xs text-slate-300 leading-relaxed">${gap.technical_detail}</p>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 font-mono text-[11px]">
+                  <div class="bg-[#111827] p-2.5 rounded-xl border border-[#1F2937]">
+                    <span class="text-[#9CA3AF]">Your Current Metric:</span>
+                    <div class="font-bold text-rose-300 mt-0.5">${gap.amateur_metric}</div>
+                  </div>
+                  <div class="bg-[#111827] p-2.5 rounded-xl border border-[#1F2937]">
+                    <span class="text-[#9CA3AF]">Pro Benchmark (${comp.pro_player_name}):</span>
+                    <div class="font-bold text-[#00C853] mt-0.5">${gap.pro_benchmark}</div>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- 30-DAY IMPROVEMENT ROADMAP -->
+        <div class="bg-[#0A0F1E] border border-[#1F2937] rounded-2xl p-6 space-y-5">
+          <div>
+            <h4 class="text-base font-black text-white flex items-center gap-2">
+              <span>📅</span> 30-Day Technical Improvement Roadmap
+            </h4>
+            <p class="text-xs text-[#9CA3AF] mt-1">Structured 4-week progression designed to close your primary gap with ${comp.pro_player_name}</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            ${comp.improvement_roadmap.map((week, idx) => `
+              <div class="bg-[#111827] border border-[#1F2937] rounded-2xl p-4 flex flex-col justify-between space-y-3">
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-black font-mono text-[#00C853] bg-[#00C853]/10 px-2 py-0.5 rounded">${week.week}</span>
+                    <span class="text-[10px] text-slate-500 font-bold">Phase ${idx + 1}</span>
+                  </div>
+                  <h5 class="text-xs font-black text-white">${week.title}</h5>
+                  <p class="text-[11px] text-slate-400 leading-relaxed">${week.focus_drill}</p>
+                </div>
+
+                <div class="bg-[#0A0F1E] p-2.5 rounded-xl border border-[#1F2937] text-[10px]">
+                  <span class="text-[#00C853] font-bold">🎯 Target Outcome:</span>
+                  <p class="text-slate-300 mt-0.5">${week.target_outcome}</p>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCuratedMatches(players) {
+      const grid = document.getElementById('curated-matches-grid');
+      if (!grid) return;
+
+      const allMatches = [];
+      players.forEach(p => {
+        p.recommendedMatches.forEach(m => {
+          allMatches.push({ ...m, player: p });
+        });
+      });
+
+      grid.innerHTML = allMatches.map(m => `
+        <div class="bg-[#111827] border border-[#1F2937] hover:border-[#00C853]/50 rounded-2xl p-4 flex flex-col justify-between space-y-3 transition-all group">
+          <div class="space-y-2.5">
+            <div class="relative rounded-xl overflow-hidden aspect-video bg-[#0A0F1E] border border-[#1F2937]">
+              <img src="${m.thumbnailUrl}" alt="${m.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+              <div class="absolute bottom-2 right-2 px-2 py-0.5 bg-black/80 text-[10px] font-mono font-bold text-white rounded">
+                ${m.duration}
+              </div>
+              <div class="absolute top-2 left-2 px-2 py-0.5 bg-[#00C853] text-black text-[10px] font-black rounded">
+                ${m.player.flag} ${m.player.name}
+              </div>
+            </div>
+
+            <div class="space-y-1">
+              <span class="text-[10px] font-bold text-blue-400">${m.tournament} (${m.year})</span>
+              <h4 class="text-xs font-black text-white group-hover:text-[#00C853] transition-colors line-clamp-1">${m.title}</h4>
+              <p class="text-[11px] text-slate-400">vs <strong class="text-slate-200">${m.opponent}</strong> (${m.outcome})</p>
+            </div>
+
+            <div class="bg-[#0A0F1E] p-2.5 rounded-xl border border-[#1F2937] text-[11px]">
+              <span class="text-[#00C853] font-bold">Key Insight:</span>
+              <p class="text-slate-300 line-clamp-2 mt-0.5">${m.keyLearning}</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 pt-1 border-t border-[#1F2937]">
+            <button 
+              onclick="selectPlayerForAnalysis('${m.player.id}', '${m.youtubeUrl}')"
+              class="px-3 py-2 rounded-xl bg-[#00C853] hover:bg-[#00B048] text-black text-xs font-black transition-all text-center cursor-pointer"
+            >
+              ⚡ Analyze
+            </button>
+            <a 
+              href="${m.youtubeUrl}" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              class="px-3 py-2 rounded-xl bg-[#0A0F1E] hover:bg-[#1F2937] text-white text-xs font-bold border border-[#1F2937] transition-all text-center"
+            >
+              Watch Video ↗
+            </a>
+          </div>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>

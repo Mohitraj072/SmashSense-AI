@@ -13,6 +13,8 @@ import {
   X,
   Star,
   User as UserIcon,
+  Award,
+  Trophy,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -106,6 +108,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <Users className="w-4 h-4" />
                 <span>Opponents</span>
+              </a>
+
+              <a
+                href="/pro_analysis.html"
+                className="px-3 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-emerald-400 hover:bg-slate-800/80 transition-all flex items-center gap-1.5 border border-transparent"
+              >
+                <Trophy className="w-4 h-4 text-emerald-400" />
+                <span>Pro Analysis</span>
               </a>
 
               <a
@@ -268,6 +278,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <Users className="w-5 h-5" />
                 <span>Opponents Dossier</span>
+              </a>
+
+              <a
+                href="/pro_analysis.html"
+                className="w-full text-left px-4 py-3 rounded-xl text-sm font-bold text-[#9CA3AF] hover:bg-[#111827] hover:text-emerald-400 transition-all flex items-center gap-3 border border-transparent min-h-[44px]"
+              >
+                <Trophy className="w-5 h-5 text-emerald-400" />
+                <span>Pro Analysis</span>
               </a>
 
               <a

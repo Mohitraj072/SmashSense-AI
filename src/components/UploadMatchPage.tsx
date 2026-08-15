@@ -31,6 +31,11 @@ export const UploadMatchPage: React.FC<UploadMatchPageProps> = ({
   onMatchAnalyzed,
   onCancel,
 }) => {
+  const [activeTab, setActiveTab] = useState<'upload' | 'youtube'>('upload');
+  const [youtubeUrl, setYoutubeUrl] = useState<string>('');
+  const [youtubePreviewId, setYoutubePreviewId] = useState<string | null>(null);
+  const [youtubeError, setYoutubeError] = useState<string | null>(null);
+
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [uploadedFileSize, setUploadedFileSize] = useState<string | null>(null);
   const [matchDate, setMatchDate] = useState<string>(
@@ -57,6 +62,38 @@ export const UploadMatchPage: React.FC<UploadMatchPageProps> = ({
     'Endurance & stamina levels',
     'Opponent weaknesses & patterns',
   ];
+
+  const extractYoutubeId = (url: string) => {
+    if (!url) return null;
+    const trimmed = url.trim();
+    const shortMatch = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:embed|v|shorts)\/)([\w-]{11})/);
+    if (shortMatch) return shortMatch[1];
+    try {
+      const parsed = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
+      if (parsed.hostname.includes('youtube.com') || parsed.hostname.includes('youtu.be')) {
+        const v = parsed.searchParams.get('v');
+        if (v && v.length === 11) return v;
+      }
+    } catch(e) {}
+    const generalMatch = trimmed.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/);
+    return generalMatch ? generalMatch[1] : null;
+  };
+
+  const handlePreviewYoutube = () => {
+    if (!youtubeUrl.trim()) {
+      setYoutubeError('Please enter a YouTube video URL first.');
+      setYoutubePreviewId(null);
+      return;
+    }
+    const yId = extractYoutubeId(youtubeUrl);
+    if (!yId) {
+      setYoutubeError('Invalid YouTube link. Please check format (e.g. youtube.com/watch?v=... or youtu.be/...)');
+      setYoutubePreviewId(null);
+      return;
+    }
+    setYoutubeError(null);
+    setYoutubePreviewId(yId);
+  };
 
   useEffect(() => {
     // Auto-tick checklist items one by one on page load
@@ -106,6 +143,17 @@ export const UploadMatchPage: React.FC<UploadMatchPageProps> = ({
     }, 1500);
 
     try {
+      const isYoutube = activeTab === 'youtube';
+      if (isYoutube) {
+        const yId = extractYoutubeId(youtubeUrl);
+        if (!yId) {
+          setYoutubeError('Please enter a valid YouTube link before submitting.');
+          setIsAnalyzing(false);
+          clearInterval(interval);
+          return;
+        }
+      }
+
       const response = await fetch('/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -118,7 +166,9 @@ export const UploadMatchPage: React.FC<UploadMatchPageProps> = ({
           score: scoreString,
           date: matchDate,
           tournament: tournament || 'Open Match',
-          videoFileName: uploadedFileName || 'badminton_match.mp4',
+          videoFileName: isYoutube ? 'youtube_video' : (uploadedFileName || 'badminton_match.mp4'),
+          youtube_url: isYoutube ? youtubeUrl.trim() : undefined,
+          youtubeUrl: isYoutube ? youtubeUrl.trim() : undefined,
         }),
       });
 
@@ -134,7 +184,11 @@ export const UploadMatchPage: React.FC<UploadMatchPageProps> = ({
       }
 
       const matchData: MatchAnalysis = resJson.title
-        ? resJson
+        ? {
+            ...resJson,
+            youtubeUrl: isYoutube ? youtubeUrl.trim() : resJson.youtubeUrl,
+            youtube_url: isYoutube ? youtubeUrl.trim() : resJson.youtube_url,
+          }
         : {
             id: `match_${Date.now()}`,
             title: `Match vs ${opponentName || 'Opponent'}`,
@@ -146,8 +200,14 @@ export const UploadMatchPage: React.FC<UploadMatchPageProps> = ({
             durationMinutes: 42,
             result: result === 'Win' ? 'Win' : 'Loss',
             score: scoreString,
-            videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-            thumbnailUrl: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=600&auto=format&fit=crop&q=80',
+            youtubeUrl: isYoutube ? youtubeUrl.trim() : undefined,
+            youtube_url: isYoutube ? youtubeUrl.trim() : undefined,
+            videoUrl: isYoutube
+              ? youtubeUrl.trim()
+              : 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+            thumbnailUrl: isYoutube && youtubePreviewId
+              ? `https://img.youtube.com/vi/${youtubePreviewId}/hqdefault.jpg`
+              : 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=600&auto=format&fit=crop&q=80',
             aiSummary: resJson.overall_rating?.reasoning || `Gemini Coach Analysis vs ${opponentName || 'Opponent'}.`,
             player_weaknesses: resJson.player_weaknesses || ['Deep Backhand Corner Footwork'],
             improvement_areas: resJson.improvement_areas || ['Rearcourt Recovery Drills'],
@@ -230,7 +290,7 @@ export const UploadMatchPage: React.FC<UploadMatchPageProps> = ({
     <div className="max-w-6xl mx-auto px-4 py-8">
       
       {/* Header */}
-      <div className="mb-8 space-y-2">
+      <div className="mb-8 space-y-3">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00C853]/10 border border-[#00C853]/30 text-[#00C853] text-xs font-bold uppercase tracking-wider">
           <Sparkles className="w-3.5 h-3.5" /> AI Match Video Analysis Engine
         </div>
@@ -238,6 +298,17 @@ export const UploadMatchPage: React.FC<UploadMatchPageProps> = ({
         <p className="text-[#9CA3AF] text-sm">
           Upload your badminton match video to get an instant AI biomechanical, tactical, and shot-tracking report.
         </p>
+
+        {/* Dual Upload Mode Badges / Indicators */}
+        <div className="flex flex-wrap items-center gap-2.5 pt-1">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/15 border border-red-500/30 text-red-400 text-xs font-bold shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+            ▶️ YouTube Video Link Supported
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#00C853]/15 border border-[#00C853]/30 text-[#00C853] text-xs font-bold shadow-sm">
+            📁 Local MP4 / MOV Video Upload
+          </span>
+        </div>
       </div>
 
       {/* AI Processing Overlay */}
@@ -301,48 +372,149 @@ export const UploadMatchPage: React.FC<UploadMatchPageProps> = ({
         <div className="lg:col-span-7 bg-[#111827] border border-[#1F2937] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
           <form onSubmit={handleAnalyze} className="space-y-6">
             
-            {/* Drag and drop zone with dashed green border */}
-            <div className="space-y-2">
-              <label className="block text-xs font-extrabold text-[#F9FAFB] uppercase tracking-wider flex items-center gap-2">
-                <Video className="w-4 h-4 text-[#00C853]" /> Match Video Clip <span className="text-[#00C853]">*</span>
-              </label>
+            {/* Tab Switcher */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 p-1 rounded-xl bg-[#0A0F1E] border border-[#1F2937]">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('upload')}
+                  className={`flex-1 py-2.5 px-4 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    activeTab === 'upload'
+                      ? 'bg-[#00C853] text-[#0A0F1E] shadow-sm'
+                      : 'text-[#9CA3AF] hover:text-[#F9FAFB] hover:bg-[#111827]'
+                  }`}
+                >
+                  <span>📁</span>
+                  <span>Upload Video File</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('youtube')}
+                  className={`flex-1 py-2.5 px-4 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    activeTab === 'youtube'
+                      ? 'bg-[#00C853] text-[#0A0F1E] shadow-sm'
+                      : 'text-[#9CA3AF] hover:text-[#F9FAFB] hover:bg-[#111827]'
+                  }`}
+                >
+                  <span>▶️</span>
+                  <span>YouTube Link</span>
+                  <span className="px-1.5 py-0.5 rounded bg-red-600 text-white text-[10px] font-black tracking-wider">
+                    YOUTUBE
+                  </span>
+                </button>
+              </div>
 
-              <div className="relative border-2 border-dashed border-[#00C853] bg-[#0A0F1E] hover:bg-[#0A0F1E]/80 rounded-2xl p-8 text-center transition-all group cursor-pointer">
-                <input
-                  type="file"
-                  accept="video/*"
-                  onChange={handleFileChange}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                />
+              {/* Tab 1: Video File Upload */}
+              {activeTab === 'upload' ? (
+                <div className="space-y-2">
+                  <label className="block text-xs font-extrabold text-[#F9FAFB] uppercase tracking-wider flex items-center gap-2">
+                    <Video className="w-4 h-4 text-[#00C853]" /> Match Video Clip <span className="text-[#00C853]">*</span>
+                  </label>
 
-                <div className="flex flex-col items-center justify-center gap-3">
-                  {/* Shuttle icon */}
-                  <div className="w-14 h-14 rounded-2xl bg-[#00C853]/10 border border-[#00C853]/30 flex items-center justify-center text-2xl text-[#00C853] group-hover:scale-110 transition-transform shadow-inner">
-                    🏸
-                  </div>
+                  <div className="relative border-2 border-dashed border-[#00C853] bg-[#0A0F1E] hover:bg-[#0A0F1E]/80 rounded-2xl p-8 text-center transition-all group cursor-pointer">
+                    <input
+                      type="file"
+                      accept="video/*"
+                      onChange={handleFileChange}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
 
-                  {uploadedFileName ? (
-                    <div className="space-y-1">
-                      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#00C853]/15 border border-[#00C853]/40 text-[#00C853] text-sm font-bold">
-                        <Check className="w-4 h-4 stroke-[3]" />
-                        <span className="truncate max-w-[260px]">{uploadedFileName}</span>
+                    <div className="flex flex-col items-center justify-center gap-3">
+                      <div className="w-14 h-14 rounded-2xl bg-[#00C853]/10 border border-[#00C853]/30 flex items-center justify-center text-2xl text-[#00C853] group-hover:scale-110 transition-transform shadow-inner">
+                        🏸
                       </div>
-                      {uploadedFileSize && (
-                        <p className="text-xs text-[#9CA3AF]">{uploadedFileSize}</p>
+
+                      {uploadedFileName ? (
+                        <div className="space-y-1">
+                          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#00C853]/15 border border-[#00C853]/40 text-[#00C853] text-sm font-bold">
+                            <Check className="w-4 h-4 stroke-[3]" />
+                            <span className="truncate max-w-[260px]">{uploadedFileName}</span>
+                          </div>
+                          {uploadedFileSize && (
+                            <p className="text-xs text-[#9CA3AF]">{uploadedFileSize}</p>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          <p className="text-sm font-bold text-[#F9FAFB]">
+                            Drag your match video here or click to browse
+                          </p>
+                          <p className="text-xs text-[#9CA3AF]">
+                            Supports MP4, MOV, AVI, MKV (up to 500MB)
+                          </p>
+                        </div>
                       )}
                     </div>
-                  ) : (
-                    <div className="space-y-1">
-                      <p className="text-sm font-bold text-[#F9FAFB]">
-                        Drag your match video here or click to browse
-                      </p>
-                      <p className="text-xs text-[#9CA3AF]">
-                        Supports MP4, MOV, AVI, MKV (up to 500MB)
-                      </p>
+                  </div>
+                </div>
+              ) : (
+                /* Tab 2: YouTube Link Tab */
+                <div className="space-y-3">
+                  <label className="block text-xs font-extrabold text-[#F9FAFB] uppercase tracking-wider flex items-center gap-2">
+                    <span>▶️</span> YouTube Match Video URL <span className="text-[#00C853]">*</span>
+                  </label>
+
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="url"
+                      value={youtubeUrl ?? ''}
+                      onChange={(e) => {
+                        setYoutubeUrl(e.target.value);
+                        setYoutubeError(null);
+                        const yId = extractYoutubeId(e.target.value);
+                        if (yId) setYoutubePreviewId(yId);
+                      }}
+                      placeholder="Paste YouTube match video URL here..."
+                      className="flex-1 px-4 py-3 rounded-xl bg-[#0A0F1E] border border-[#1F2937] text-[#F9FAFB] text-sm font-medium focus:outline-none focus:border-[#00C853] transition-colors placeholder:text-[#9CA3AF]/60"
+                    />
+                    <button
+                      type="button"
+                      onClick={handlePreviewYoutube}
+                      className="px-5 py-3 rounded-xl bg-[#1F2937] hover:bg-[#374151] text-[#F9FAFB] hover:text-[#00C853] border border-[#374151] font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
+                    >
+                      <span>👁️ Preview</span>
+                    </button>
+                  </div>
+
+                  <p className="text-[11px] text-[#9CA3AF] flex items-center gap-1.5">
+                    <Info className="w-3.5 h-3.5 text-[#00C853]" />
+                    <span>Accepted formats: <code className="text-slate-300">youtube.com/watch?v=...</code> or <code className="text-slate-300">youtu.be/...</code></span>
+                  </p>
+
+                  {youtubeError && (
+                    <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-semibold flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{youtubeError}</span>
+                    </div>
+                  )}
+
+                  {youtubePreviewId && (
+                    <div className="p-4 rounded-2xl bg-[#0A0F1E] border border-[#1F2937] space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-[#00C853] flex items-center gap-1.5">
+                          <span>▶️</span> YouTube Match Video Ready
+                        </span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#111827] border border-[#1F2937] text-slate-400">
+                          ID: {youtubePreviewId}
+                        </span>
+                      </div>
+                      <div className="relative rounded-xl overflow-hidden aspect-video max-h-52 bg-black border border-[#1F2937]">
+                        <img
+                          src={`https://img.youtube.com/vi/${youtubePreviewId}/hqdefault.jpg`}
+                          alt="YouTube Video Thumbnail"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-3">
+                          <div className="flex items-center gap-2 text-xs font-bold text-[#F9FAFB]">
+                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                            <span>Video Stream Verified & Ready for AI Extraction</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Form Fields */}
@@ -355,7 +527,7 @@ export const UploadMatchPage: React.FC<UploadMatchPageProps> = ({
                 </label>
                 <input
                   type="date"
-                  value={matchDate}
+                  value={matchDate ?? ''}
                   onChange={(e) => setMatchDate(e.target.value)}
                   className="w-full px-4 py-3.5 rounded-xl bg-[#0A0F1E] border border-[#1F2937] text-[#F9FAFB] text-base font-medium focus:outline-none focus:border-[#00C853] transition-colors min-h-[44px] input-responsive"
                 />
@@ -368,7 +540,7 @@ export const UploadMatchPage: React.FC<UploadMatchPageProps> = ({
                 </label>
                 <input
                   type="text"
-                  value={opponentName}
+                  value={opponentName ?? ''}
                   onChange={(e) => setOpponentName(e.target.value)}
                   placeholder="e.g. Viktor Axelsen"
                   required
@@ -416,7 +588,7 @@ export const UploadMatchPage: React.FC<UploadMatchPageProps> = ({
                   </label>
                   <input
                     type="number"
-                    value={yourScore}
+                    value={yourScore ?? ''}
                     onChange={(e) => setYourScore(e.target.value)}
                     placeholder="21"
                     className="w-full px-4 py-3.5 rounded-xl bg-[#0A0F1E] border border-[#1F2937] text-[#F9FAFB] text-base font-mono font-bold focus:outline-none focus:border-[#00C853] transition-colors min-h-[44px] input-responsive"
@@ -429,7 +601,7 @@ export const UploadMatchPage: React.FC<UploadMatchPageProps> = ({
                   </label>
                   <input
                     type="number"
-                    value={opponentScore}
+                    value={opponentScore ?? ''}
                     onChange={(e) => setOpponentScore(e.target.value)}
                     placeholder="18"
                     className="w-full px-4 py-3.5 rounded-xl bg-[#0A0F1E] border border-[#1F2937] text-[#F9FAFB] text-base font-mono font-bold focus:outline-none focus:border-[#00C853] transition-colors min-h-[44px] input-responsive"

@@ -87,7 +87,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, defaultUser }) =>
               <label className="block text-xs font-semibold text-slate-300 mb-1">Player Full Name</label>
               <input
                 type="text"
-                value={playerName}
+                value={playerName ?? ''}
                 onChange={(e) => setPlayerName(e.target.value)}
                 required
                 className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
@@ -99,7 +99,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, defaultUser }) =>
               <label className="block text-xs font-semibold text-slate-300 mb-1">Email Address</label>
               <input
                 type="email"
-                value={email}
+                value={email ?? ''}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
@@ -111,7 +111,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, defaultUser }) =>
               <label className="block text-xs font-semibold text-slate-300 mb-1">Password</label>
               <input
                 type="password"
-                value={password}
+                value={password ?? ''}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"

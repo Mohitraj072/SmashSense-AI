@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import {
   User as UserIcon,
@@ -23,24 +23,35 @@ export const PlayerProfilePage: React.FC<PlayerProfilePageProps> = ({
   user,
   onUpdateUser,
 }) => {
-  const [name, setName] = useState(user.name);
-  const [level, setLevel] = useState<User['level']>(user.level);
-  const [dominantHand, setDominantHand] = useState<User['dominantHand']>(user.dominantHand);
-  const [playingStyle, setPlayingStyle] = useState<User['playingStyle']>(user.playingStyle);
-  const [racketModel, setRacketModel] = useState(user.racketModel);
-  const [stringTension, setStringTension] = useState(user.stringTension);
+  const [name, setName] = useState(user?.name || '');
+  const [level, setLevel] = useState<User['level']>(user?.level || 'Intermediate');
+  const [dominantHand, setDominantHand] = useState<User['dominantHand']>(user?.dominantHand || 'Right');
+  const [playingStyle, setPlayingStyle] = useState<User['playingStyle']>(user?.playingStyle || 'All-Rounder');
+  const [racketModel, setRacketModel] = useState(user?.racketModel || '');
+  const [stringTension, setStringTension] = useState(user?.stringTension || '');
   const [isSaved, setIsSaved] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name || '');
+      setLevel(user.level || 'Intermediate');
+      setDominantHand(user.dominantHand || 'Right');
+      setPlayingStyle(user.playingStyle || 'All-Rounder');
+      setRacketModel(user.racketModel || '');
+      setStringTension(user.stringTension || '');
+    }
+  }, [user]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onUpdateUser({
       ...user,
-      name,
-      level,
-      dominantHand,
-      playingStyle,
-      racketModel,
-      stringTension,
+      name: name || user.name || 'Player',
+      level: level || 'Intermediate',
+      dominantHand: dominantHand || 'Right',
+      playingStyle: playingStyle || 'All-Rounder',
+      racketModel: racketModel || '',
+      stringTension: stringTension || '',
     });
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);
@@ -114,7 +125,7 @@ export const PlayerProfilePage: React.FC<PlayerProfilePageProps> = ({
               <label className="block text-xs font-semibold text-slate-300 mb-1">Full Name</label>
               <input
                 type="text"
-                value={name}
+                value={name || ''}
                 onChange={(e) => setName(e.target.value)}
                 required
                 className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-emerald-500"
@@ -125,7 +136,7 @@ export const PlayerProfilePage: React.FC<PlayerProfilePageProps> = ({
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">Skill Classification</label>
                 <select
-                  value={level}
+                  value={level || 'Intermediate'}
                   onChange={(e) => setLevel(e.target.value as User['level'])}
                   className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-emerald-500"
                 >
@@ -139,7 +150,7 @@ export const PlayerProfilePage: React.FC<PlayerProfilePageProps> = ({
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">Dominant Hand</label>
                 <select
-                  value={dominantHand}
+                  value={dominantHand || 'Right'}
                   onChange={(e) => setDominantHand(e.target.value as User['dominantHand'])}
                   className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-emerald-500"
                 >
@@ -152,7 +163,7 @@ export const PlayerProfilePage: React.FC<PlayerProfilePageProps> = ({
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1">Primary Playing Style</label>
               <select
-                value={playingStyle}
+                value={playingStyle || 'All-Rounder'}
                 onChange={(e) => setPlayingStyle(e.target.value as User['playingStyle'])}
                 className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-emerald-500"
               >
@@ -168,7 +179,7 @@ export const PlayerProfilePage: React.FC<PlayerProfilePageProps> = ({
                 <label className="block text-xs font-semibold text-slate-300 mb-1">Racquet Model</label>
                 <input
                   type="text"
-                  value={racketModel}
+                  value={racketModel || ''}
                   onChange={(e) => setRacketModel(e.target.value)}
                   placeholder="e.g. Yonex Astrox 88D Pro"
                   className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-emerald-500"
@@ -179,7 +190,7 @@ export const PlayerProfilePage: React.FC<PlayerProfilePageProps> = ({
                 <label className="block text-xs font-semibold text-slate-300 mb-1">String & Tension</label>
                 <input
                   type="text"
-                  value={stringTension}
+                  value={stringTension || ''}
                   onChange={(e) => setStringTension(e.target.value)}
                   placeholder="e.g. BG80 @ 28 lbs"
                   className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-emerald-500"

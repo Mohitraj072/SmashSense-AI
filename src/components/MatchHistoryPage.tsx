@@ -126,7 +126,7 @@ export const MatchHistoryPage: React.FC<MatchHistoryPageProps> = ({
           <Search className="w-4 h-4 text-[#9CA3AF] absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            value={searchTerm}
+            value={searchTerm ?? ''}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by opponent name..."
             className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0A0F1E] border border-[#1F2937] text-[#F9FAFB] text-base placeholder-[#9CA3AF]/60 focus:outline-none focus:border-[#00C853] transition-colors min-h-[44px] input-responsive"
@@ -203,6 +203,23 @@ export const MatchHistoryPage: React.FC<MatchHistoryPageProps> = ({
                         <h3 className="text-[18px] font-bold text-[#F9FAFB] leading-tight truncate">
                           {match.opponentName || 'Opponent Player'}
                         </h3>
+                        {match.sport && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-extrabold flex items-center gap-1">
+                            {match.sport}
+                          </span>
+                        )}
+                        {(match.youtubeUrl || match.youtube_url) && (
+                          <a
+                            href={match.youtubeUrl || match.youtube_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] px-2 py-0.5 rounded-md bg-red-500/10 border border-red-500/30 text-red-400 hover:text-red-300 font-bold flex items-center gap-1 transition-colors"
+                            title="Watch on YouTube"
+                          >
+                            <span>▶️</span>
+                            <span>YouTube</span>
+                          </a>
+                        )}
                         <span className="text-[10px] px-2 py-0.5 rounded-md bg-[#0A0F1E] border border-[#1F2937] text-[#9CA3AF] font-medium">
                           {match.category || "Men's Singles"}
                         </span>
